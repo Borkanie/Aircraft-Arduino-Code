@@ -5,120 +5,70 @@
 
 #include "Wire.h"
 
-// AD0 low = 0x68 (default for Sparkfun module)
-// AD0 high = 0x69
-int MPU_addr = 0x68;
-
-// vvvvvvvvvvvvvvvvvv  VERY VERY IMPORTANT vvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-//These are the previously determined offsets and scale factors for accelerometer and gyro for
-// a particular example of an MPU-6050. They are not correct for other examples.
-//The IMU code will NOT work well or at all if these are not correct
-
-float A_cal[6] = {265.0, -80.0, -700.0, 0.994, 1.000, 1.014}; // 0..2 offset xyz, 3..5 scale xyz
-float G_off[3] = { -499.5, -17.7, -82.0}; //raw offsets, determined for gyro at rest
-#define gscale ((250./32768.0)*(PI/180.0))  //gyro default 250 LSB per d/s -> rad/s
-
-// ^^^^^^^^^^^^^^^^^^^ VERY VERY IMPORTANT ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-// GLOBALLY DECLARED, required for Mahony filter
-// vector to hold quaternion
-float q[4] = {1.0, 0.0, 0.0, 0.0};
-
-// Free parameters in the Mahony filter and fusion scheme,
-// Kp for proportional feedback, Ki for integral
-float Kp = 30.0;
-float Ki = 1.0;
-
-// with MPU-9250, angles start oscillating at Kp=40. Ki does not seem to help and is not required.
-// with MPU-6050, some instability observed at Kp=100 Now set to 30.
-
-// char s[60]; //snprintf buffer, if needed
-
-// globals for AHRS loop timing
-unsigned long now_ms, last_ms = 0; //millis() timers
-
-// print interval
-unsigned long print_ms = 50; //print angles every "print_ms" milliseconds
-float yaw, pitch, roll; //Euler angle output
-
 void setup() {
-
+  // join I2C bus (I2Cdev library doesn't do this automatically)
   Wire.begin();
-  Serial.begin(9600);
-  Serial.println("starting");
-
-  // initialize sensor
-  // defaults for gyro and accel sensitivity are 250 dps and +/- 2 g
-  Wire.beginTransmission(MPU_addr);
-  Wire.write(0x6B);  // PWR_MGMT_1 register
-  Wire.write(0);     // set to zero (wakes up the MPU-6050)
-  Wire.endTransmission(true);
-
+ 
+  // initialize serial communication
+  // (38400 chosen because it works as well at 8MHz as it does at 16MHz, but
+  // it's really up to you depending on your project)
+  Serial.begin(38400);
+ 
+  // initialize device
+  Serial.println("Initializing I2C devices...");
+  accelgyro.initialize();
+ 
+  // verify connection
+    Serial.println("Testing device connections...");
+    Serial.println(accelgyro.testConnection() ? "MPU9250 connection successful" : "MPU9250 connection failed");
+    delay(1000);
+    Serial.println("     ");
+ 
+ //Mxyz_init_calibrated ();
 }
-
-// AHRS loop
-float* GetAngles()
-{
-   //raw data
-  int16_t ax, ay, az;
-  int16_t gx, gy, gz;
-int16_t Tmp;
-  //scaled data as vector
-  float Axyz[3];
-  float Gxyz[3];
-
-
-  Wire.beginTransmission(MPU_addr);
-  Wire.write(0x3B);  // starting with register 0x3B (ACCEL_XOUT_H)
-  Wire.endTransmission(false);
-  Wire.requestFrom(MPU_addr, 14, true); // request a total of 14 registers
-  int t = Wire.read() << 8;
-  ax = t | Wire.read(); // 0x3B (ACCEL_XOUT_H) & 0x3C (ACCEL_XOUT_L)
-  t = Wire.read() << 8;
-  ay = t | Wire.read(); // 0x3D (ACCEL_YOUT_H) & 0x3E (ACCEL_YOUT_L)
-  t = Wire.read() << 8;
-  az = t | Wire.read(); // 0x3F (ACCEL_ZOUT_H) & 0x40 (ACCEL_ZOUT_L)
-  t = Wire.read() << 8;
-  Tmp = t | Wire.read(); // 0x41 (TEMP_OUT_H) & 0x42 (TEMP_OUT_L)
-  t = Wire.read() << 8;
-  gx = t | Wire.read(); // 0x43 (GYRO_XOUT_H) & 0x44 (GYRO_XOUT_L)
-  t = Wire.read() << 8;
-  gy = t | Wire.read(); // 0x45 (GYRO_YOUT_H) & 0x46 (GYRO_YOUT_L)
-  t = Wire.read() << 8;
-  gz = t | Wire.read(); // 0x47 (GYRO_ZOUT_H) & 0x48 (GYRO_ZOUT_L)
-
-  static float response[6];
-  response[0] = (float) ax;
-  response[1] = (float) ay;
-  response[2] = (float) az;
-  response[3] = (float) gx;
-  response[4] = (float) gy;
-  response[5] = (float) gz;
-
-  return response;
-} 
+ 
 void loop()
-{
-  
-  float *response;
-  response=GetAngles();
-  float Axyz[3];
-  float Gxyz[3];
-  Axyz[0]=response[0] ;
-  Axyz[1]=response[1] ;
-  Axyz[2]=response[2] ;
-  Gxyz[0]=response[3] ;
-  Gxyz[1]=response[4] ;
-  Gxyz[2]=response[5] ;
-  now_ms = millis(); //time to print?
-  if (now_ms - last_ms >= print_ms) {
-    last_ms = now_ms;
-    // print angles for serial plotter...
-    //  Serial.print("ypr ");
-    Serial.print( Axyz[0], 0);
-    Serial.print(", ");
-    Serial.print(Axyz[1], 0);
-    Serial.print(", ");
-    Serial.println(Axyz[2], 0);
-  }
+{   
+    getAccel_Data();
+    getGyro_Data();
+    getCompassDate_calibrated(); // compass data has been calibrated here
+    getHeading();               //before we use this function we should run 'getCompassDate_calibrated()' frist, so that we can get calibrated data ,then we can get correct angle .                    
+    getTiltHeading();           
+ 
+    Serial.println("calibration parameter: ");
+    Serial.print(mx_centre);
+    Serial.print("         ");
+    Serial.print(my_centre);
+    Serial.print("         ");
+    Serial.println(mz_centre);
+    Serial.println("     ");
+ 
+ 
+    Serial.println("Acceleration(g) of X,Y,Z:");
+    Serial.print(Axyz[0]);
+    Serial.print(",");
+    Serial.print(Axyz[1]);
+    Serial.print(",");
+    Serial.println(Axyz[2]);
+    Serial.println("Gyro(degress/s) of X,Y,Z:");
+    Serial.print(Gxyz[0]);
+    Serial.print(",");
+    Serial.print(Gxyz[1]);
+    Serial.print(",");
+    Serial.println(Gxyz[2]);
+    Serial.println("Compass Value of X,Y,Z:");
+    Serial.print(Mxyz[0]);
+    Serial.print(",");
+    Serial.print(Mxyz[1]);
+    Serial.print(",");
+    Serial.println(Mxyz[2]);
+    Serial.println("The clockwise angle between the magnetic north and X-Axis:");
+    Serial.print(heading);
+    Serial.println(" ");
+    Serial.println("The clockwise angle between the magnetic north and the projection of the positive X-Axis in the horizontal plane:");
+    Serial.println(tiltheading);
+    Serial.println("   ");
+    Serial.println("   ");
+    Serial.println("   ");
+    delay(300);
 }
