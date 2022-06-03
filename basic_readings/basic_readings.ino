@@ -1,95 +1,70 @@
-/*
-  MPU-9250 Accel, Gryro and Mag Test Program
+#include "Wire.h"
 
-  This  program reads and prints to the Serial Monitor window
-  the raw X/Y/Z values for the accelerometer, gyroscope, magnetometer
-  and temperature.  It also calculates the pitch and roll values
+int MPU_addr = 0x68;
+unsigned long now_ms, last_ms = 0; // millis() timers
 
-  Connect VCC to 5V and GND to ground on the MCU
-  Connect SCL to SCL and SDA to SDA on MCU
+// print interval
+unsigned long print_ms = 100; // print angles every "print_ms" milliseconds
+int Ax, Ay, Az;               // Euler angle output
+int Gx, Gy, Gz;               // Euler angle output
+void setup()
+{
 
-  Uses Bolder Flight MPU9250.h library
-*/
-#include "mpu9250.h"
-using namespace bfs;
-// an MPU9250 object with the MPU-9250 sensor on I2C bus 0 with address 0x68
-Mpu9250 IMU(Wire, 0x68);
-int status;
-float AcX, AcY, AcZ;
-float pitch, roll;
-//===============================================================================
-//  Initialization
-//===============================================================================
-void setup() {
-  // serial to display data
-  Serial.begin(115200);
-  while (!Serial) {}
+  Wire.begin();
+  Serial.begin(9600);
+  Serial.println("starting");
 
-  // start communication with IMU
-  status = IMU.Begin();
-  if (status < 0) {
-    Serial.println("IMU initialization unsuccessful");
-    Serial.println("Check IMU wiring or try cycling power");
-    Serial.print("Status: ");
-    Serial.println(status);
-    while (1) {}
+  // initialize sensor
+  // defaults for gyro and accel sensitivity are 250 dps and +/- 2 g
+  Wire.beginTransmission(MPU_addr);
+  Wire.write(0x6B); // PWR_MGMT_1 register
+  Wire.write(0);    // set to zero (akes up the MPU-6050)
+  Wire.write(0x6C); // PWR_MGMT_2 register
+  Wire.write(0);    // Enables all accel and gyro registers
+  Wire.endTransmission(true);
+}
+
+void loop()
+{
+  now_ms = millis(); // time to print?
+  if (now_ms - last_ms >= print_ms)
+  {
+    // raw data
+    int16_t ax, ay, az;
+    int16_t gx, gy, gz;
+    int16_t Tmp;
+    Wire.beginTransmission(MPU_addr);
+    //Wire.write(0x3B); // starting with register 0x3B (ACCEL_XOUT_H)    
+    Wire.requestFrom(MPU_addr, 14, false); // request a total of 14 registers
+    int16_t t = Wire.read() << 8;
+    ax = t | Wire.read(); // 0x3B (ACCEL_XOUT_H) & 0x3C (ACCEL_XOUT_L)
+    t = Wire.read() << 8;
+    ay = t | Wire.read(); // 0x3D (ACCEL_YOUT_H) & 0x3E (ACCEL_YOUT_L)
+    t = Wire.read() << 8;
+    az = t | Wire.read(); // 0x3F (ACCEL_ZOUT_H) & 0x40 (ACCEL_ZOUT_L)
+    t = Wire.read() << 8;
+    Tmp = t | Wire.read(); // 0x41 (TEMP_OUT_H) & 0x42 (TEMP_OUT_L)
+    t = Wire.read() << 8;
+    gx = t | Wire.read(); // 0x43 (GYRO_XOUT_H) & 0x44 (GYRO_XOUT_L)
+    t = Wire.read() << 8;
+    gy = t | Wire.read(); // 0x45 (GYRO_YOUT_H) & 0x46 (GYRO_YOUT_L)
+    t = Wire.read() << 8;
+    gz = t | Wire.read(); // 0x47 (GYRO_ZOUT_H) & 0x48 (GYRO_ZOUT_L)
+    static int16_t response[]{ax, ay, az, gx, gy, gz};
+    last_ms = now_ms;
+    // print angles for serial plotter...
+    //  Serial.print("ypr ");
+    Serial.print(response[0], 0);
+    Serial.print(", ");
+    Serial.print(response[1], 0);
+    Serial.print(", ");
+    Serial.print(response[2], 0);
+    Serial.print(", ");
+    Serial.print(response[3], 0);
+    Serial.print(", ");
+    Serial.print(response[4], 0);
+    Serial.print(", ");
+    Serial.println(response[5], 0);
+    Wire.endTransmission(true);
   }
-}
-//===============================================================================
-//  Main
-//===============================================================================
-void loop() {
-  IMU.Read();
-  // display the data
-  Serial.println("\tX\tY\tZ");
-  Serial.print("Accel:\t");
-  Serial.print(IMU.accel_x_mps2(), 3);
-  Serial.print("\t");
-  Serial.print(IMU.accel_y_mps2(), 3);
-  Serial.print("\t");
-  Serial.println(IMU.accel_z_mps2(), 3);
-
-  Serial.print("Gyro:\t");
-  Serial.print(IMU.gyro_x_radps(), 3);
-  Serial.print("\t");
-  Serial.print(IMU.gyro_y_radps(), 3);
-  Serial.print("\t");
-  Serial.println(IMU.gyro_z_radps(), 3);
-
-  Serial.print("Mag:\t");
-  Serial.print(IMU.mag_x_ut(), 3);
-  Serial.print("\t");
-  Serial.print(IMU.mag_y_ut(), 3);
-  Serial.print("\t");
-  Serial.println(IMU.mag_z_ut(), 3);
-
-  Serial.print("Temp:\t");
-  Serial.println(IMU.die_temp_c(), 3);
-
-  AcX = IMU.accel_x_mps2();
-  AcY = IMU.accel_x_mps2();
-  AcZ = IMU.accel_x_mps2();
-  //get pitch/roll
-  getAngle(AcX, AcY, AcZ);
-
-  Serial.println("\tAngle in Degrees");
-  Serial.print("Pitch:\t"); 
-  Serial.println(pitch, 6);
-  Serial.print("Roll:\t"); 
-  Serial.println(roll, 6);
-  Serial.println();
-  delay(250);
-}
-//===============================================================================
-//  GetAngle - Converts accleration data to pitch & roll
-//===============================================================================
-void getAngle(float Vx, float Vy, float Vz) {
-  float x = Vx;
-  float y = Vy;
-  float z = Vz;
-  pitch = atan(x / sqrt((y * y) + (z * z)));
-  roll = atan(y / sqrt((x * x) + (z * z)));
-  //convert radians into degrees
-  pitch = pitch * (180.0 / 3.14);
-  roll = roll * (180.0 / 3.14) ;
 }

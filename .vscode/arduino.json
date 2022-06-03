@@ -1,5 +1,5 @@
 {
-    "sketch": "MonthySensor\\MonthySensor.ino",
+    "sketch": "AddresScanner\\AddressScanner.ino",
     "board": "arduino:sam:arduino_due_x_dbg",
     "port": "COM7"
 }
