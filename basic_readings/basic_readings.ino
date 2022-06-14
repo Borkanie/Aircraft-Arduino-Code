@@ -1,70 +1,67 @@
-#include "Wire.h"
+#include "MPU9250.h"
+#include <cmath>
 
-int MPU_addr = 0x68;
-unsigned long now_ms, last_ms = 0; // millis() timers
+MPU9250 mpu; // You can also use MPU9255 as is
+float dcm[3][3];
 
-// print interval
-unsigned long print_ms = 100; // print angles every "print_ms" milliseconds
-int Ax, Ay, Az;               // Euler angle output
-int Gx, Gy, Gz;               // Euler angle output
-void setup()
-{
+float accelVector[3][1];
 
-  Wire.begin();
-  Serial.begin(9600);
-  Serial.println("starting");
+float ax,ay,az;
+float phi,theta,psi;
 
-  // initialize sensor
-  // defaults for gyro and accel sensitivity are 250 dps and +/- 2 g
-  Wire.beginTransmission(MPU_addr);
-  Wire.write(0x6B); // PWR_MGMT_1 register
-  Wire.write(0);    // set to zero (akes up the MPU-6050)
-  Wire.write(0x6C); // PWR_MGMT_2 register
-  Wire.write(0);    // Enables all accel and gyro registers
-  Wire.endTransmission(true);
+void setup() {
+    Serial.begin(9600);
+    Wire.begin();
+    delay(2000);    
+    mpu.setup(0x68);  // change to your own address
 }
 
-void loop()
-{
-  now_ms = millis(); // time to print?
-  if (now_ms - last_ms >= print_ms)
-  {
-    // raw data
-    int16_t ax, ay, az;
-    int16_t gx, gy, gz;
-    int16_t Tmp;
-    Wire.beginTransmission(MPU_addr);
-    //Wire.write(0x3B); // starting with register 0x3B (ACCEL_XOUT_H)    
-    Wire.requestFrom(MPU_addr, 14, false); // request a total of 14 registers
-    int16_t t = Wire.read() << 8;
-    ax = t | Wire.read(); // 0x3B (ACCEL_XOUT_H) & 0x3C (ACCEL_XOUT_L)
-    t = Wire.read() << 8;
-    ay = t | Wire.read(); // 0x3D (ACCEL_YOUT_H) & 0x3E (ACCEL_YOUT_L)
-    t = Wire.read() << 8;
-    az = t | Wire.read(); // 0x3F (ACCEL_ZOUT_H) & 0x40 (ACCEL_ZOUT_L)
-    t = Wire.read() << 8;
-    Tmp = t | Wire.read(); // 0x41 (TEMP_OUT_H) & 0x42 (TEMP_OUT_L)
-    t = Wire.read() << 8;
-    gx = t | Wire.read(); // 0x43 (GYRO_XOUT_H) & 0x44 (GYRO_XOUT_L)
-    t = Wire.read() << 8;
-    gy = t | Wire.read(); // 0x45 (GYRO_YOUT_H) & 0x46 (GYRO_YOUT_L)
-    t = Wire.read() << 8;
-    gz = t | Wire.read(); // 0x47 (GYRO_ZOUT_H) & 0x48 (GYRO_ZOUT_L)
-    static int16_t response[]{ax, ay, az, gx, gy, gz};
-    last_ms = now_ms;
-    // print angles for serial plotter...
-    //  Serial.print("ypr ");
-    Serial.print(response[0], 0);
-    Serial.print(", ");
-    Serial.print(response[1], 0);
-    Serial.print(", ");
-    Serial.print(response[2], 0);
-    Serial.print(", ");
-    Serial.print(response[3], 0);
-    Serial.print(", ");
-    Serial.print(response[4], 0);
-    Serial.print(", ");
-    Serial.println(response[5], 0);
-    Wire.endTransmission(true);
-  }
+void DCM(float phi, float theta, float psi,float (&rslt)[3][3]) {
+    phi=phi*PI/180;
+    theta=theta*PI/180;
+    psi=psi*PI/180;
+
+    rslt[0][0]=(float)(cos(phi)*sin(theta));
+    rslt[0][1]=(float)(cos(phi)*sin(theta)*sin(psi)-sin(phi)*cos(theta));
+    rslt[0][2]=(float)(cos(phi)*sin(theta)*cos(psi)+sin(phi)*sin(theta));
+    rslt[1][0]=(float)(sin(phi)*cos(theta));
+    rslt[1][1]=(float)(sin(phi)*sin(theta)*sin(psi)+cos(phi)*cos(psi));
+    rslt[1][2]=(float)(sin(phi)*sin(theta)*cos(psi)-cos(phi)*sin(psi));
+    rslt[2][0]=(float)(-sin(theta));
+    rslt[2][1]=(float)(cos(theta)*sin(psi));
+    rslt[2][2]=(float)(cos(phi)*cos(psi));
+
+}
+
+void mulMat(float mat1[3][3], float mat2[3][1],float (&rslt)[3][1]) {
+    rslt[2][0]=(mat1[0][0]*mat2[0][0]+mat1[0][1]*mat2[1][0]+mat1[0][2]*mat2[2][0]);
+    rslt[2][1]=(mat1[1][0]*mat2[0][0]+mat1[1][1]*mat2[1][0]+mat1[1][2]*mat2[2][0]);
+    rslt[2][2]=(mat1[2][0]*mat2[0][0]+mat1[2][1]*mat2[1][0]+mat1[2][2]*mat2[2][0]);
+}
+
+void loop() {
+    if (mpu.update()) {
+        
+        ax=mpu.getAccX();
+        ay=mpu.getAccY();
+        az=mpu.getAccZ();
+        /*
+        Serial.print(mpu.getYaw()); Serial.print(", ");
+        Serial.print(mpu.getPitch()); Serial.print(", ");
+        Serial.println(mpu.getRoll());*/
+        Serial.print(ax); Serial.print(", ");
+        Serial.print(ay); Serial.print(", ");
+        Serial.println(az);
+        accelVector[0][0]=ax;
+        accelVector[1][0]=ay;
+        accelVector[2][0]=az;
+        phi=mpu.getEulerX();
+        theta=mpu.getEulerY();
+        psi=mpu.getEulerZ();
+        DCM(phi,theta,psi,dcm);
+        mulMat(dcm,accelVector,accelVector);
+        Serial.print(accelVector[0][0]); Serial.print(", ");
+        Serial.print(accelVector[1][0]); Serial.print(", ");
+        Serial.println(accelVector[2][0]);
+    }
 }

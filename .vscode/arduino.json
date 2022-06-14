@@ -1,5 +1,5 @@
 {
-    "sketch": "AddresScanner\\AddressScanner.ino",
+    "sketch": "basic_readings\\basic_readings.ino",
     "board": "arduino:sam:arduino_due_x_dbg",
     "port": "COM7"
 }
