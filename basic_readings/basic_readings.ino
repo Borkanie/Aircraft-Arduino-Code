@@ -5,6 +5,7 @@ MPU9250 mpu; // You can also use MPU9255 as is
 float dcm[3][3];
 
 float accelVector[3][1];
+const float accellOffset[]={0.1392,-0.07486,0.1308};
 
 float ax,ay,az;
 float phi,theta,psi;
@@ -14,6 +15,7 @@ void setup() {
     Wire.begin();
     delay(2000);    
     mpu.setup(0x68);  // change to your own address
+    mpu.setAccBias(-0.1092*32768.0, 0.07486*32768.0, -0.1308*32768.0 );
 }
 
 void DCM(float phi, float theta, float psi,float (&rslt)[3][3]) {
@@ -49,19 +51,22 @@ void loop() {
         Serial.print(mpu.getYaw()); Serial.print(", ");
         Serial.print(mpu.getPitch()); Serial.print(", ");
         Serial.println(mpu.getRoll());*/
-        Serial.print(ax); Serial.print(", ");
-        Serial.print(ay); Serial.print(", ");
-        Serial.println(az);
+
         accelVector[0][0]=ax;
         accelVector[1][0]=ay;
         accelVector[2][0]=az;
         phi=mpu.getEulerX();
         theta=mpu.getEulerY();
         psi=mpu.getEulerZ();
-        DCM(phi,theta,psi,dcm);
-        mulMat(dcm,accelVector,accelVector);
-        Serial.print(accelVector[0][0]); Serial.print(", ");
-        Serial.print(accelVector[1][0]); Serial.print(", ");
-        Serial.println(accelVector[2][0]);
+        //DCM(phi,theta,psi,dcm);
+        //mulMat(dcm,accelVector,accelVector);
+        //Serial.print(phi); Serial.print(", ");
+        //Serial.print(theta); Serial.print(", ");
+        //Serial.println(psi);
+        // Serial.print("Rotated accel:");
+        Serial.print(phi); Serial.print(", ");
+        Serial.print(theta); Serial.print(", ");
+        Serial.println(psi);
+        //Serial.println(accelVector[0][0]*accelVector[0][0]+accelVector[1][0]*accelVector[1][0]+accelVector[2][0]*accelVector[2][0]);
     }
 }
