@@ -19,14 +19,17 @@
                 "C:\\Users\\Bogdan\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\sam\\1.6.12\\system\\libsam",
                 "C:\\Users\\Bogdan\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\sam\\1.6.12\\system\\CMSIS\\CMSIS\\Include\\",
                 "C:\\Users\\Bogdan\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\sam\\1.6.12\\system\\CMSIS\\Device\\ATMEL\\",
+                "C:\\Users\\Bogdan\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\sam\\1.6.12\\libraries\\RF24\\",
                 "C:\\Users\\Bogdan\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\sam\\1.6.12\\cores\\arduino",
                 "C:\\Users\\Bogdan\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\sam\\1.6.12\\variants\\arduino_due_x",
+                "C:\\Users\\Bogdan\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\sam\\1.6.12\\libraries\\Wire\\src",
                 "c:\\users\\bogdan\\appdata\\local\\arduino15\\packages\\arduino\\tools\\arm-none-eabi-gcc\\4.8.3-2014q1\\arm-none-eabi\\include\\c++\\4.8.3",
                 "c:\\users\\bogdan\\appdata\\local\\arduino15\\packages\\arduino\\tools\\arm-none-eabi-gcc\\4.8.3-2014q1\\arm-none-eabi\\include\\c++\\4.8.3\\arm-none-eabi",
                 "c:\\users\\bogdan\\appdata\\local\\arduino15\\packages\\arduino\\tools\\arm-none-eabi-gcc\\4.8.3-2014q1\\arm-none-eabi\\include\\c++\\4.8.3\\backward",
                 "c:\\users\\bogdan\\appdata\\local\\arduino15\\packages\\arduino\\tools\\arm-none-eabi-gcc\\4.8.3-2014q1\\lib\\gcc\\arm-none-eabi\\4.8.3\\include",
                 "c:\\users\\bogdan\\appdata\\local\\arduino15\\packages\\arduino\\tools\\arm-none-eabi-gcc\\4.8.3-2014q1\\lib\\gcc\\arm-none-eabi\\4.8.3\\include-fixed",
-                "c:\\users\\bogdan\\appdata\\local\\arduino15\\packages\\arduino\\tools\\arm-none-eabi-gcc\\4.8.3-2014q1\\arm-none-eabi\\include"
+                "c:\\users\\bogdan\\appdata\\local\\arduino15\\packages\\arduino\\tools\\arm-none-eabi-gcc\\4.8.3-2014q1\\arm-none-eabi\\include",
+                "C:/Users/Bogdan/AppData/Local/Arduino15/packages/arduino/hardware/sam/1.6.12/system/libsam/include"
             ],
             "forcedInclude": [
                 "C:\\Users\\Bogdan\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\sam\\1.6.12\\cores\\arduino\\Arduino.h"
