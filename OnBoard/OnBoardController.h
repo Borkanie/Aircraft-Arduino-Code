@@ -26,7 +26,7 @@ namespace OnBoard
         bool radioNumber = 1; // 0 uses address[0] to transmit, 1 uses address[1] to transmit
         bool role = false;    // true = TX role, false = RX role
         // default payload value
-        uint8_t payload[6] = {1, 50, 100, 150, 150};
+        uint8_t payload[5] = {1, 50, 100, 150, 150};
         bool SelfControl = false;
         void InitializeRadioReciever();
         void InitializeGPS();
@@ -40,12 +40,13 @@ namespace OnBoard
         bool ReadDifference();
         void CalculateDiff();
         bool ReadMPU();
+        void ReadGPS();
     public:
         Controller(uint32_t motorPin, uint32_t elevatorPin, uint32_t rudderPin, uint32_t aileronLeftPin, uint32_t aileronRightPin);
         void Setup(bool serial);
-
-        void CalculateNewControl();
-
+        void InterpretComand();
         void ReadDataFromSensors();
+        void FullStateFeedBackControl();
+        void CalculateDiscreteController();
     };
 }

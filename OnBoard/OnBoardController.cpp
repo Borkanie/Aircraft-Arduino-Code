@@ -19,8 +19,20 @@ namespace OnBoard
         while (!this->radio.begin())
         {
             SerialPrintLn("radio hardware is not responding!!");
-           delay(1000);
+            delay(1000);
         }
+        // Set the PA Level low to try preventing power supply related problems
+        // because these examples are likely run with nodes in close proximity to
+        // each other.
+        radio.setPALevel(RF24_PA_LOW); // RF24_PA_MAX is default.
+
+        // save on transmission time by setting the radio to only transmit the
+        // number of bytes we need to transmit a float
+        radio.setPayloadSize(sizeof(payload)); // float datatype occupies 4 bytes
+
+        // set the RX address of the TX node into a RX pipe
+        radio.openReadingPipe(1, address[0]); // using pipe 1
+        radio.startListening();               // put radio in RX mode
         SerialPrintLn("Done with Radio set up");
         ChangeState(OnBoardHelper::SETUP);
     }
@@ -61,8 +73,8 @@ namespace OnBoard
         while (!ReadDifference())
         {
             delay(100);
-            //Serial.println(this->value);
-        }        
+            // Serial.println(this->value);
+        }
         WriteCurrentReadings();
         SerialPrintLn("Done with MPU set up");
         ChangeState(OnBoardHelper::SETUP);
@@ -93,21 +105,20 @@ namespace OnBoard
     }
     void Controller::CalculateDiff()
     {
-        this->value = (this->lastRead[0] - this->newRead[0]) * (this->lastRead[0] - this->newRead[0]) 
-        + (this->lastRead[1] - this->newRead[1]) * (this->lastRead[1] - this->newRead[1])
-         + (this->lastRead[2] - this->newRead[2]) * (this->lastRead[2] - this->newRead[2]);
+        this->value = (this->lastRead[0] - this->newRead[0]) * (this->lastRead[0] - this->newRead[0]) + (this->lastRead[1] - this->newRead[1]) * (this->lastRead[1] - this->newRead[1]) + (this->lastRead[2] - this->newRead[2]) * (this->lastRead[2] - this->newRead[2]);
     }
-
     void Controller::InitializeSerial()
     {
         if (this->PcSerial)
         {
+            ChangeState(OnBoardHelper::ERROR);
             Serial.begin(9600);
             while (!Serial)
             {
                 delay(100);
             }
             this->SerialPrintLn("The aircraft system is starting up");
+            ChangeState(OnBoardHelper::SETUP);
         }
     }
     void Controller::SerialPrintLn(String text)
@@ -142,9 +153,12 @@ namespace OnBoard
     }
     void Controller::ChangeState(OnBoardHelper::States newState)
     {
-        digitalWrite(this->state, 0);
-        this->state = newState;
-        digitalWrite(this->state, 1);
+        if (this->state != newState)
+        {
+            digitalWrite(this->state, 0);
+            this->state = newState;
+            digitalWrite(this->state, 1);
+        }
     }
     void Controller::InterpretPayload()
     {
@@ -152,7 +166,7 @@ namespace OnBoard
         {
             ChangeState(OnBoardHelper::INDEPENDENT);
             ReadDataFromSensors();
-            CalculateNewControl();
+            InterpretComand();
         }
         else
         {
@@ -175,6 +189,15 @@ namespace OnBoard
         pinMode(OnBoardHelper::NORMAL, OUTPUT);
         pinMode(OnBoardHelper::INDEPENDENT, OUTPUT);
         pinMode(OnBoardHelper::ERROR, OUTPUT);
+
+        ChangeState(OnBoardHelper::SETUP);
+        delay(500);
+        ChangeState(OnBoardHelper::INDEPENDENT);
+        delay(500);
+        ChangeState(OnBoardHelper::NORMAL);
+        delay(500);
+        ChangeState(OnBoardHelper::ERROR);
+        delay(500);
         ChangeState(OnBoardHelper::SETUP);
         pinMode(this->MotorPin, OUTPUT);
         pinMode(this->ElevatorPin, OUTPUT);
@@ -185,16 +208,60 @@ namespace OnBoard
         InitializeSerial();
         InitializeMPU();
         InitializeRadioReciever();
-        //InitializeGPS();
-        
+        // InitializeGPS();
+        ChangeState(OnBoardHelper::NORMAL);
     }
 
-    void Controller::CalculateNewControl()
+    void Controller::InterpretComand()
     {
+        if (ReadRadio())
+        {
+            if (payload[0] == 1)
+            {
+                ChangeState(OnBoardHelper::INDEPENDENT);
+                SerialPrintLn("AUTONOMOUS");
+                CalculateDiscreteController();
+                FullStateFeedBackControl();
+            }
+            else
+            {
+                ChangeState(OnBoardHelper::NORMAL);
+                SerialPrintLn("MANUAL");
+                analogWrite(this->MotorPin, this->payload[1]);
+                analogWrite(this->ElevatorPin, this->payload[2]);
+                analogWrite(this->RudderPin, this->payload[3]);
+                analogWrite(this->AileronLeftPin, this->payload[4]);
+                analogWrite(this->AileronRightPin, 256 - this->payload[4]);
+            }
+        }
+        else
+        {
+            SerialPrintLn("MANUAL");
+            analogWrite(this->MotorPin, this->payload[1]);
+            analogWrite(this->ElevatorPin, this->payload[2]);
+            analogWrite(this->RudderPin, this->payload[3]);
+            analogWrite(this->AileronLeftPin, this->payload[4]);
+            analogWrite(this->AileronRightPin, 256 - this->payload[4]);
+        }
     }
 
     void Controller::ReadDataFromSensors()
     {
+        ReadMPU();
+        ReadRadio();
+        ReadGPS();
     }
 
+    void Controller::FullStateFeedBackControl()
+    {
+
+    }
+
+    void Controller::CalculateDiscreteController()
+    {
+    }
+    
+    void Controller::ReadGPS()
+    {
+    }
 }
