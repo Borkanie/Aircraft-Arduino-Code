@@ -36,6 +36,7 @@
         "cinttypes": "cpp",
         "typeinfo": "cpp",
         "string": "cpp",
-        "lu": "cpp"
+        "lu": "cpp",
+        "core": "cpp"
     }
 }

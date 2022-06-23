@@ -1,7 +1,7 @@
-#include </Eigen/Core>
-#include </Eigen/LU>
+#include <Core>
+#include <LU>
 #pragma once
-
+using namespace Eigen;
 namespace Estimator
 {
     void subMatrix(const float mat[9][9], float temp[9][9], int p, int q, int n);
@@ -10,20 +10,7 @@ namespace Estimator
     class ExtendedSystem
     {
     private:
-        const float I12[12][12] =
-            {
-                {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                {0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0},
-                {0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0},
-                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0},
-                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}};
+        const Matrix2i I12=Identity(12, 12);
         // Our estimator actually estimates deviance from equilibrium conditions.
         static float DeltaInputs[5];
         static float DeltaStates[12];
