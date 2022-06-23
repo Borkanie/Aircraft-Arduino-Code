@@ -227,21 +227,21 @@ namespace OnBoard
             {
                 ChangeState(OnBoardHelper::NORMAL);
                 SerialPrintLn("MANUAL");
-                analogWrite(this->MotorPin, this->payload[1]);
-                analogWrite(this->ElevatorPin, this->payload[2]);
-                analogWrite(this->RudderPin, this->payload[3]);
-                analogWrite(this->AileronLeftPin, this->payload[4]);
-                analogWrite(this->AileronRightPin, 256 - this->payload[4]);
+                analogWrite(this->MotorPin, 200);        // this->payload[1]);
+                analogWrite(this->ElevatorPin, 400);     // this->payload[2]);
+                analogWrite(this->RudderPin, 600);       // this->payload[3]);
+                analogWrite(this->AileronLeftPin, 800);  // this->payload[4]);
+                analogWrite(this->AileronRightPin, 900); // 1034 - this->payload[4]);
             }
         }
         else
         {
             SerialPrintLn("MANUAL");
-            analogWrite(this->MotorPin, this->payload[1]);
-            analogWrite(this->ElevatorPin, this->payload[2]);
-            analogWrite(this->RudderPin, this->payload[3]);
-            analogWrite(this->AileronLeftPin, this->payload[4]);
-            analogWrite(this->AileronRightPin, 256 - this->payload[4]);
+            analogWrite(this->MotorPin, 200);        // this->payload[1]);
+            analogWrite(this->ElevatorPin, 400);     // this->payload[2]);
+            analogWrite(this->RudderPin, 600);       // this->payload[3]);
+            analogWrite(this->AileronLeftPin, 800);  // this->payload[4]);
+            analogWrite(this->AileronRightPin, 900); // 1034 - this->payload[4]);
         }
     }
 
@@ -250,17 +250,18 @@ namespace OnBoard
         ReadMPU();
         ReadRadio();
         ReadGPS();
+        float states[9];
+        this->Kalman.DoKalmanAlgorithm(states);
     }
 
     void Controller::FullStateFeedBackControl()
     {
-
     }
 
     void Controller::CalculateDiscreteController()
     {
     }
-    
+
     void Controller::ReadGPS()
     {
     }

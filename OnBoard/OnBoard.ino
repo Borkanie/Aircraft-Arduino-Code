@@ -1,21 +1,33 @@
 #include "Arduino.h"
 #include "OnBoardController.h"
 #include <stdint.h>
+#include "Estimator.h"
 
 using namespace OnBoard;
 
-uint32_t motorPin = 144;
-uint32_t elevatorPin = 139;
-uint32_t rudderPin = 137;
-uint32_t aileronLeftPin = 136;
-uint32_t aileronRightPin = 135;
+uint32_t motorPin = 3;
+uint32_t elevatorPin = 4;
+uint32_t rudderPin = 5;
+uint32_t aileronLeftPin = 6;
+uint32_t aileronRightPin = 7;
 Controller controller = Controller(motorPin, elevatorPin, rudderPin, aileronLeftPin, aileronRightPin);
 void setup()
 { 
-    controller.Setup(false);
+    //controller.Setup(true);
+      pinMode(motorPin, OUTPUT);
+        pinMode(elevatorPin, OUTPUT);
+        pinMode(rudderPin, OUTPUT);
+        pinMode(aileronLeftPin, OUTPUT);
+        pinMode(aileronRightPin, OUTPUT);
 }
 void loop()
 {
-    controller.ReadDataFromSensors();
-    controller.InterpretComand();
+   //controller.ReadDataFromSensors();
+   //controller.InterpretComand();
+
+               analogWrite(motorPin, 50);        // Thrust set pwm
+            analogWrite(elevatorPin, 100);     // Elevator set pwm
+            analogWrite(rudderPin, 150);       // Rudder set pwm
+            analogWrite(aileronLeftPin, 200);  // Aileron Left set pwm
+            analogWrite(aileronRightPin,250); // Aileron Right set pwm
 }

@@ -5,7 +5,9 @@
 #include "SPI.h"
 #include "RF24.h"
 #include <stdint.h>
+#include "Estimator.h"
 #pragma once
+
 // instantiate an object for the nRF24L01 transceiver
 namespace OnBoard
 {
@@ -41,6 +43,7 @@ namespace OnBoard
         void CalculateDiff();
         bool ReadMPU();
         void ReadGPS();
+        Estimator::ExtendedSystem Kalman;
     public:
         Controller(uint32_t motorPin, uint32_t elevatorPin, uint32_t rudderPin, uint32_t aileronLeftPin, uint32_t aileronRightPin);
         void Setup(bool serial);
