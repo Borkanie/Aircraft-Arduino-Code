@@ -16,7 +16,6 @@
             ],
             "intelliSenseMode": "gcc-x64",
             "includePath": [
-                "C:\\Users\\Bogdan\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\sam\\1.6.12\\libraries\\Eigen\\",
                 "C:\\Users\\Bogdan\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\sam\\1.6.12\\system\\libsam",
                 "C:\\Users\\Bogdan\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\sam\\1.6.12\\system\\CMSIS\\CMSIS\\Include\\",
                 "C:\\Users\\Bogdan\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\sam\\1.6.12\\system\\CMSIS\\Device\\ATMEL\\",
