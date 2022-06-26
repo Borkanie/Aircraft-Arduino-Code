@@ -24,7 +24,7 @@ namespace OnBoard
         // Set the PA Level low to try preventing power supply related problems
         // because these examples are likely run with nodes in close proximity to
         // each other.
-        radio.setPALevel(RF24_PA_LOW); // RF24_PA_MAX is default.
+        radio.setPALevel(RF24_PA_MAX); // RF24_PA_MAX is default.
 
         // save on transmission time by setting the radio to only transmit the
         // number of bytes we need to transmit a float
@@ -95,7 +95,7 @@ namespace OnBoard
             this->lastRead[0] = this->newRead[0];
             this->lastRead[1] = this->newRead[1];
             this->lastRead[2] = this->newRead[2];
-            WriteCurrentReadings();
+            // WriteCurrentReadings();
             this->newRead[0] = this->mpu.getQuaternionX();
             this->newRead[1] = this->mpu.getQuaternionY();
             this->newRead[2] = this->mpu.getQuaternionZ();
@@ -144,10 +144,9 @@ namespace OnBoard
     {
         uint8_t pipe;
         bool available = radio.available(&pipe);
-        if (available)
-        {                                           // is there a payload? get the pipe number that recieved it
-            uint8_t bytes = radio.getPayloadSize(); // get the size of the payload
-            radio.read(&payload, bytes);            // fetch payload from FIFO
+        if (available) // is there a payload? get the pipe number that recieved it
+        {
+            radio.read(&payload, radio.getPayloadSize()); // fetch payload from FIFO
         }
         return available;
     }
@@ -216,32 +215,43 @@ namespace OnBoard
     {
         if (ReadRadio())
         {
-            if (payload[0] == 1)
+            Serial.print("Recieved message was:");
+            Serial.print(payload[0]);
+            Serial.print(",");
+            Serial.print(payload[1]);
+            Serial.print(",");
+            Serial.print(payload[2]);
+            Serial.print(",");
+            Serial.print(payload[3]);
+            Serial.print(",");
+            Serial.println(payload[4]);
+            if (payload[0] != 1)
             {
                 ChangeState(OnBoardHelper::INDEPENDENT);
-                SerialPrintLn("AUTONOMOUS");
+                // SerialPrintLn("AUTONOMOUS");
                 CalculateDiscreteController();
                 FullStateFeedBackControl();
             }
             else
             {
                 ChangeState(OnBoardHelper::NORMAL);
-                SerialPrintLn("MANUAL");
-                analogWrite(this->MotorPin, 200);        // this->payload[1]);
-                analogWrite(this->ElevatorPin, 400);     // this->payload[2]);
-                analogWrite(this->RudderPin, 600);       // this->payload[3]);
-                analogWrite(this->AileronLeftPin, 800);  // this->payload[4]);
-                analogWrite(this->AileronRightPin, 900); // 1034 - this->payload[4]);
+                // SerialPrintLn("MANUAL");
+                analogWrite(this->MotorPin, 20);         // this->payload[1]);
+                analogWrite(this->ElevatorPin, 100);     // this->payload[2]);
+                analogWrite(this->RudderPin, 125);       // this->payload[3]);
+                analogWrite(this->AileronLeftPin, 200);  // this->payload[4]);
+                analogWrite(this->AileronRightPin, 255); // 1034 - this->payload[4]);
             }
         }
         else
         {
-            SerialPrintLn("MANUAL");
-            analogWrite(this->MotorPin, 200);        // this->payload[1]);
-            analogWrite(this->ElevatorPin, 400);     // this->payload[2]);
-            analogWrite(this->RudderPin, 600);       // this->payload[3]);
-            analogWrite(this->AileronLeftPin, 800);  // this->payload[4]);
-            analogWrite(this->AileronRightPin, 900); // 1034 - this->payload[4]);
+            // SerialPrintLn("MANUAL");
+            ChangeState(OnBoardHelper::ERROR);
+            analogWrite(this->MotorPin, 20);         // this->payload[1]);
+            analogWrite(this->ElevatorPin, 100);     // this->payload[2]);
+            analogWrite(this->RudderPin, 125);       // this->payload[3]);
+            analogWrite(this->AileronLeftPin, 200);  // this->payload[4]);
+            analogWrite(this->AileronRightPin, 255); // 1034 - this->payload[4]);
         }
     }
 
@@ -251,7 +261,7 @@ namespace OnBoard
         ReadRadio();
         ReadGPS();
         float states[9];
-        this->Kalman.DoKalmanAlgorithm(states);
+        // this->Kalman.DoKalmanAlgorithm(states);
     }
 
     void Controller::FullStateFeedBackControl()

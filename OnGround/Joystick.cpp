@@ -42,7 +42,7 @@ namespace Controller
         // Set the PA Level low to try preventing power supply related problems
         // because these examples are likely run with nodes in close proximity to
         // each other.
-        radio.setPALevel(RF24_PA_LOW); // RF24_PA_MAX is default.
+        radio.setPALevel(RF24_PA_MAX); // RF24_PA_MAX is default.
 
         // save on transmission time by setting the radio to only transmit the
         // number of bytes we need to transmit a float
@@ -97,16 +97,17 @@ namespace Controller
 
     void Controller::Transmit()
     {
-        bool report = radio.write(&payload, sizeof(int)); // transmit & save the report
-        if (!report)
+        bool report = radio.write(&payload, sizeof(payload)); // transmit & save the report
+        if (report)
         {
-            ChangeState(Error);
-            SerialPrintLn("Message wasn't transmitted");
+           ChangeState(Normal);
+            SerialPrintLn("Was transmitted");
+           
         }
         else
-        {
-            ChangeState(Normal);
-            SerialPrintLn("Was transmitted");
+        { ChangeState(Error);
+            SerialPrintLn("Message wasn't transmitted");
+           
         }
     }
     void Controller::SetupSerial()

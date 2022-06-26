@@ -43,7 +43,7 @@ namespace OnBoard
         void CalculateDiff();
         bool ReadMPU();
         void ReadGPS();
-        Estimator::ExtendedSystem Kalman;
+        Estimator::FixedSizeSystem Kalman;
     public:
         Controller(uint32_t motorPin, uint32_t elevatorPin, uint32_t rudderPin, uint32_t aileronLeftPin, uint32_t aileronRightPin);
         void Setup(bool serial);

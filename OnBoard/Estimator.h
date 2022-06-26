@@ -21,16 +21,46 @@ namespace Estimator
 		Matrix& operator =(const Matrix& other);
 		Matrix operator + (Matrix const& obj);
 		Matrix operator * (Matrix const& obj);
+		Matrix operator * (float const& scalar);
 		Matrix operator - (Matrix const& obj);
 		Matrix Transpose();
 		Matrix Inverse();
 		float Determinant();
+		void ChangeSign();
 		void CopyBloc(const Matrix bloc, int startingRow, int startingColumn,bool changeSign=false);
 		void Attribute(float** sourceMatrix, int startingRow, int endingRow, int startingColumn, int endingColumn);
 	};
 	void subMatrix(const float mat[9][9], float temp[9][9], int p, int q, int n);
 	float determinantOfMatrix(const float matrix[9][9], float n);
 	std::ostream& operator<<(std::ostream& os, const Matrix& dt);
+
+	class Integrator {
+		private:
+			float SamplingTime;
+			Matrix evaluatedValue;
+		public:
+			Integrator();
+			Integrator(const Matrix matrix, const float samplingTime);
+			Integrator(const int n, const int m, const float samplingTime);
+			Matrix GetValue();
+			void ReadData(Matrix data);
+			Integrator& operator=(const Integrator& other);
+			~Integrator();
+	};
+
+	class IntegrationSystem {
+	private:
+		Matrix FSF= Matrix(5,12);
+	public:
+		Integrator translationalVelocities;
+		Integrator rotationalVelocities;
+		IntegrationSystem(const Matrix translation, const Matrix rotation);
+		~IntegrationSystem();
+		void ReadTranslationalVelocities(const float accel[3]);
+		void ReadRoationalVelocities(const float accel[3]);
+		IntegrationSystem& operator =(const IntegrationSystem& other);
+	};
+
 	class DynamicAllocationSystem
 	{
 	private:
@@ -104,7 +134,6 @@ namespace Estimator
 
 	public:
 		DynamicAllocationSystem();
-		void PrintStates();
 		void DoKalmanAlgorithm(float readings[9]);
 	};
 
@@ -168,5 +197,6 @@ namespace Estimator
 		// All other states are irrelevant regarding translational movement in this model.
 		// size(12,1).
 		Matrix States = Matrix(9, 1);
+		~FixedSizeSystem();
 	};
 }
