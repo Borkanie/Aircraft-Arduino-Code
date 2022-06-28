@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <string> // std::string, std::to_string
 // instantiate an object for the nRF24L01 transceiver
+#define DegreesToRadianstConst (PI / 180)
 namespace OnBoard
 {
     void Controller::InitializeRadioReciever()
@@ -24,7 +25,7 @@ namespace OnBoard
         // Set the PA Level low to try preventing power supply related problems
         // because these examples are likely run with nodes in close proximity to
         // each other.
-        radio.setPALevel(RF24_PA_MAX); // RF24_PA_MAX is default.
+        radio.setPALevel(RF24_PA_LOW); // RF24_PA_MAX is default.
 
         // save on transmission time by setting the radio to only transmit the
         // number of bytes we need to transmit a float
@@ -51,6 +52,14 @@ namespace OnBoard
             delay(1000);
             SerialPrintLn("Waiting for satellites...");
         }
+
+        gps.f_get_position(&latitude, &lon);
+        // get latitude and longitude
+        // display position
+
+        latitude = earthRadius * CosineInCluj(latitude) * CosineInCluj(latitude);
+        lon = earthRadius * CosineInCluj(lon) * CosineInCluj(lon);
+
         SerialPrintLn("Done with GPS set up");
         ChangeState(OnBoardHelper::SETUP);
     }
@@ -92,6 +101,19 @@ namespace OnBoard
     {
         if (this->mpu.update() && this->mpu.isConnected())
         {
+            Estimator::Matrix translationalVelocties(3, 1);
+            // convert from g to m/s^2
+            translationalVelocties.matrix[0][0] = mpu.getAccX() / 9.81;
+            translationalVelocties.matrix[1][0] = mpu.getAccY() / 9.81;
+            translationalVelocties.matrix[2][0] = mpu.getAccZ() / 9.81;
+            TranslationalVelocities.ReadData(translationalVelocties);
+            //
+            Estimator::Matrix rotationalVelocties(3, 1);
+            rotationalVelocties.matrix[0][0] = mpu.getGyroX() * PI / 180;
+            rotationalVelocties.matrix[1][0] = mpu.getGyroY() * PI / 180;
+            rotationalVelocties.matrix[2][0] = mpu.getGyroZ() * PI / 180;
+            RotationalVelocities.ReadData(rotationalVelocties);
+
             this->lastRead[0] = this->newRead[0];
             this->lastRead[1] = this->newRead[1];
             this->lastRead[2] = this->newRead[2];
@@ -182,6 +204,12 @@ namespace OnBoard
     {
     }
 
+    void Controller::InitializeControllers()
+    {
+        OyController = Estimator::PIDz(0, 0.002, 0.0001);
+        OzController = Estimator::PIDz(0, 0.003, 0.0001);
+    }
+
     void Controller::Setup(bool serial)
     {
         pinMode(OnBoardHelper::SETUP, OUTPUT);
@@ -207,51 +235,50 @@ namespace OnBoard
         InitializeSerial();
         InitializeMPU();
         InitializeRadioReciever();
-        // InitializeGPS();
+        InitializeGPS();
         ChangeState(OnBoardHelper::NORMAL);
+        InitializeControllers();
     }
 
     void Controller::InterpretComand()
     {
         if (ReadRadio())
         {
-            Serial.print("Recieved message was:");
-            Serial.print(payload[0]);
-            Serial.print(",");
-            Serial.print(payload[1]);
-            Serial.print(",");
-            Serial.print(payload[2]);
-            Serial.print(",");
-            Serial.print(payload[3]);
-            Serial.print(",");
-            Serial.println(payload[4]);
             if (payload[0] != 1)
             {
+                radio.flush_rx();
                 ChangeState(OnBoardHelper::INDEPENDENT);
-                // SerialPrintLn("AUTONOMOUS");
-                CalculateDiscreteController();
-                FullStateFeedBackControl();
+                SerialPrintLn("AUTONOMOUS");
+                Estimator::Matrix control = CalculateControl();
+                // we need some mapping
+                analogWrite(this->MotorPin, ThrustToPwm(control.matrix[0][0]));    // this->payload[1]);
+                analogWrite(this->ElevatorPin, Rad2PWM(control.matrix[1][0], 0));  // this->payload[2]);
+                analogWrite(this->RudderPin, Rad2PWM(control.matrix[2][0], 0));    // this->payload[3]);
+                analogWrite(this->AileronLeftPin, Rad2PWM(control.matrix[3][0]));  // this->payload[4]);
+                analogWrite(this->AileronRightPin, Rad2PWM(control.matrix[4][0])); // 1034 - this->payload[4]);
             }
             else
             {
+                radio.flush_rx();
                 ChangeState(OnBoardHelper::NORMAL);
-                // SerialPrintLn("MANUAL");
-                analogWrite(this->MotorPin, 20);         // this->payload[1]);
-                analogWrite(this->ElevatorPin, 100);     // this->payload[2]);
-                analogWrite(this->RudderPin, 125);       // this->payload[3]);
-                analogWrite(this->AileronLeftPin, 200);  // this->payload[4]);
-                analogWrite(this->AileronRightPin, 255); // 1034 - this->payload[4]);
+                SerialPrintLn("MANUAL");
+                analogWrite(this->MotorPin, payload[0]);        // this->payload[1]);
+                analogWrite(this->ElevatorPin, payload[1]);     // this->payload[2]);
+                analogWrite(this->RudderPin, payload[2]);       // this->payload[3]);
+                analogWrite(this->AileronLeftPin, payload[3]);  // this->payload[4]);
+                analogWrite(this->AileronRightPin, payload[4]); // 1034 - this->payload[4]);
             }
         }
         else
         {
             // SerialPrintLn("MANUAL");
+            radio.flush_rx();
             ChangeState(OnBoardHelper::ERROR);
-            analogWrite(this->MotorPin, 20);         // this->payload[1]);
-            analogWrite(this->ElevatorPin, 100);     // this->payload[2]);
-            analogWrite(this->RudderPin, 125);       // this->payload[3]);
-            analogWrite(this->AileronLeftPin, 200);  // this->payload[4]);
-            analogWrite(this->AileronRightPin, 255); // 1034 - this->payload[4]);
+            analogWrite(this->MotorPin, payload[0]);        // this->payload[1]);
+            analogWrite(this->ElevatorPin, payload[1]);     // this->payload[2]);
+            analogWrite(this->RudderPin, payload[2]);       // this->payload[3]);
+            analogWrite(this->AileronLeftPin, payload[3]);  // this->payload[4]);
+            analogWrite(this->AileronRightPin, payload[4]); // 1034 - this->payload[4]);
         }
     }
 
@@ -260,19 +287,74 @@ namespace OnBoard
         ReadMPU();
         ReadRadio();
         ReadGPS();
-        float states[9];
-        // this->Kalman.DoKalmanAlgorithm(states);
+        Estimator::Matrix readings(9, 1);
+        readings.CopyBloc(TranslationalVelocities.GetValue(), 0, 0);
+        readings.CopyBloc(RotationalVelocities.GetValue(), 3, 0);
+        readings.matrix[7][0] = newRead[0];
+        readings.matrix[8][0] = newRead[0];
+        readings.matrix[9][0] = newRead[0];
+
+        Kalman.DoKalmanAlgorithm(readings);
     }
 
-    void Controller::FullStateFeedBackControl()
+    Estimator::Matrix Controller::CalculateControl()
     {
+        Estimator::Matrix control(5, 1);
+        control = Kalman.DeltaInputs + Kalman.Inputs;
+        control.matrix[2][0] += OyController.GetCommand();
+        control.matrix[3][0] += OzController.GetCommand();
+        return control;
     }
 
-    void Controller::CalculateDiscreteController()
+    uint8_t Rad2PWM(float radians, float offset)
     {
+        float result;
+        if (abs(radians) > PI / 6)
+        {
+            int n = (int)(radians / (PI / 6));
+            result = radians - n * PI / 6;
+        }
+        else
+        {
+            result = radians;
+        }
+        return (uint8_t)((result + offset) * 255 / pi);
+    }
+    
+    uint8_t ThrustToPwm(float thrust)
+    {
+        return (uint8_t)((thrust - ThrustCoeff[1]) / ThrustCoeff[0]);
     }
 
     void Controller::ReadGPS()
     {
+        if (Serial1.available() > 0)
+        { // check for gps data
+
+            if (gps.encode(Serial1.read())) // encode gps data
+            {
+                gps.f_get_position(&relativeLat, &relativeLon);
+
+                // pe "x"
+                //positieActuala.matrix[0][0] = earthRadius * CosineInCluj(relativeLat) * CosineInCluj(relativeLon);
+                // pe "y"
+                float temp = earthRadius * CosineInCluj(relativeLat) * CosineInCluj(relativeLon);
+                // pe "z"
+                relativeLon = earthRadius * CosineInCluj(relativeLat) * CosineInCluj(relativeLon);
+                relativeLat=temp;
+                OyController.Read(lon-relativeLon);
+                OzController.Read(latitude-relativeLat);
+            }
+        }
+    }
+
+    float Controller::SineInCluj(float angleInRadians)
+    {
+        return -0.7288 * angleInRadians * DegreesToRadianstConst + 1.28;
+    }
+
+    float Controller::CosineInCluj(float angleInRadians)
+    {
+        return 0.6847 * angleInRadians * DegreesToRadianstConst + 0.1697;
     }
 }

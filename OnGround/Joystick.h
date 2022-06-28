@@ -29,7 +29,7 @@ void ChangeMode();
         int RudderValue;
         int AileronValue;
         FlagPins STATE;
-        uint8_t payload[5] = {0, 0, 0, 0, 0};
+        uint16_t payload[5] = {0, 0, 0, 0, 0};
         void SetupRadio();
         void SetupSerial();        
     public:

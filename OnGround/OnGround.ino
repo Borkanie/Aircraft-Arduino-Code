@@ -7,7 +7,7 @@ using namespace Controller;
 
 void setup()
 {
-    controller.Setup(false);
+    controller.Setup(true);
     attachInterrupt(digitalPinToInterrupt(Mode), ChangeMode, RISING);
 }
 void loop()

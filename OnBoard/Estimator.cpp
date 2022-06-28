@@ -1,5 +1,5 @@
 #include "Estimator.h"
-#include <iostream>
+//#include <iostream>
 
 namespace Estimator
 {
@@ -23,14 +23,14 @@ namespace Estimator
 		}
 		delete[] result;
 	}
-
+	/*
 	std::ostream& operator<<(std::ostream& os, const Matrix& dt) {
 		os << "Matrix of size " << dt.rows << "," << dt.columns << ": " << std::endl;
 		for (int i = 0; i < dt.rows; i++)
 		{
 			for (int j = 0; j < dt.columns; j++)
 			{
-				if ((dt.matrix[i][j] < 0.001 && dt.matrix[i][j]>0)||
+				if ((dt.matrix[i][j] < 0.001 && dt.matrix[i][j]>0) ||
 					(dt.matrix[i][j] < 0 && dt.matrix[i][j]>-0.001))
 				{
 					os << 0 << ", ";
@@ -42,7 +42,82 @@ namespace Estimator
 			os << std::endl;
 		}
 		return os;
+	}*/
+#pragma region PIDz
+	PIDz::PIDz()
+	{
 	}
+	PIDz::PIDz(float kp, float ki, float ts)
+	{
+		Kp = kp;
+		Ki = ki;
+		Ts = ts;
+	}
+	PIDz::PIDz(float kp, float ki, float ts, float kd, float d)
+	{
+		Kp = kp;
+		Ki = ki;
+		Ts = ts;
+		Kd = kd;
+		N = d;
+	}
+	PIDz::PIDz(float startingValues, float kp, float ki, float ts)
+	{
+		Kp = kp;
+		Ki = ki;
+		Ts = ts;
+		currentError = startingValues;
+	}
+	PIDz::PIDz(float startingValues, float kp, float ki, float ts, float kd, float d)
+	{
+		Kp = kp;
+		Ki = ki;
+		Ts = ts;
+		Kd = kd;
+		N = d;
+		currentError = startingValues;
+	}
+	void PIDz::Read(float readValue)
+	{
+		lastError = currentError;
+		currentError = readValue;
+	}
+	float PIDz::GetCommand() {
+		float command = currentError * Kp;
+		if (Ki != 0 && currentError != 0)
+		{
+			if (currentError == lastError)
+			{
+				command += 10 * command;
+			}
+			else {
+				command += Ki * Ts * currentError / (currentError - lastError);
+			}
+		}
+		if (Kd != 0 && currentError != 0)
+		{
+			float numitor = currentError + (N * Ts - 1) * lastError;
+			if (numitor == 0)
+			{
+				command += 10 * command;
+			}
+			else {
+				command += (Kd * N * (currentError - lastError)) / numitor;
+			}
+		}
+		return command;
+	}
+	PIDz& PIDz::operator=(const PIDz& other) {
+		currentError = other.currentError;
+		Kp = other.Kp;
+		Ki = other.Ki;
+		Kd = other.Kd;
+		Ts = other.Ts;
+		N = other.N;
+
+		return *this;
+	}
+#pragma endregion
 
 #pragma region Integrator
 	Integrator::Integrator() {

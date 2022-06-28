@@ -505,11 +505,11 @@ private:
         uint8_t raw_data[14];                                                 // x/y/z accel register data stored here
         read_bytes(mpu_i2c_addr, ACCEL_XOUT_H, 14, &raw_data[0]);             // Read the 14 raw data registers into data array
         destination[0] = ((int16_t)raw_data[0] << 8) | (int16_t)raw_data[1];  // Turn the MSB and LSB into a signed 16-bit value
-        destination[1] = ((int16_t)raw_data[2] << 8) | (int16_t)raw_data[3];
+        destination[1] = -((int16_t)raw_data[2] << 8) | (int16_t)raw_data[3];
         destination[2] = ((int16_t)raw_data[4] << 8) | (int16_t)raw_data[5];
         destination[3] = ((int16_t)raw_data[6] << 8) | (int16_t)raw_data[7];
         destination[4] = ((int16_t)raw_data[8] << 8) | (int16_t)raw_data[9];
-        destination[5] = ((int16_t)raw_data[10] << 8) | (int16_t)raw_data[11];
+        destination[5] = -((int16_t)raw_data[10] << 8) | (int16_t)raw_data[11];
         destination[6] = ((int16_t)raw_data[12] << 8) | (int16_t)raw_data[13];
     }
 

@@ -1,5 +1,5 @@
 #pragma once
-#include <ostream>
+//#include <ostream>
 
 namespace Estimator
 {
@@ -32,7 +32,7 @@ namespace Estimator
 	};
 	void subMatrix(const float mat[9][9], float temp[9][9], int p, int q, int n);
 	float determinantOfMatrix(const float matrix[9][9], float n);
-	std::ostream& operator<<(std::ostream& os, const Matrix& dt);
+	//std::ostream& operator<<(std::ostream& os, const Matrix& dt);
 
 	class Integrator {
 		private:
@@ -46,6 +46,26 @@ namespace Estimator
 			void ReadData(Matrix data);
 			Integrator& operator=(const Integrator& other);
 			~Integrator();
+	};
+
+	class PIDz {
+	private:
+	public:
+		float currentError = 0;
+		float lastError = 0;
+		float Kp = 0;
+		float Ki = 0;
+		float Ts = 0;
+		float Kd = 0;
+		float N = 0;
+		PIDz();
+		PIDz(float kp, float ki, float ts);
+		PIDz(float kp, float ki, float ts,float kd,float d);
+		PIDz(float startingValues, float kp, float ki, float ts);
+		PIDz(float startingValues, float kp, float ki, float ts, float kd, float d);
+		void Read(float readValue);
+		float GetCommand();
+		PIDz& operator =(const PIDz& other);
 	};
 
 	class IntegrationSystem {
