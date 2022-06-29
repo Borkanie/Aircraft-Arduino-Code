@@ -13,7 +13,7 @@ uint32_t aileronRightPin = 7;
 Controller controller = Controller(motorPin, elevatorPin, rudderPin, aileronLeftPin, aileronRightPin);
 void setup()
 {
-  controller.Setup(false);
+  controller.Setup(true);
 }
 void loop()
 {

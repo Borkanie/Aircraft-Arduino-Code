@@ -1,8 +1,11 @@
 #pragma once
 //#include <ostream>
-
+#define DegreesToRadianstConst (3.18 / 180)
+#define earthRadius 6371000
 namespace Estimator
 {
+	float CosineInCluj(float angleInRadians);
+    float SineInCluj(float angleInRadians);
 	float** dynamicAlocation(int n, int m);
 	void deallocateMemo(float** result, int n, int m);
 	class Matrix {

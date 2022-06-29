@@ -6,6 +6,7 @@
 #include "RF24.h"
 #include <stdint.h>
 #include "Estimator.h"
+#include "MissionControl.h"
 #pragma once
 
 // instantiate an object for the nRF24L01 transceiver
@@ -22,11 +23,12 @@ namespace OnBoard
     class Controller : OnBoardHelper::AircraftConfiguration
     {
     private:
-        float relativeLat = 46.786;
-        float relativeLon = 23.592;
+    //this will gives us the position error to the current mission
+        MissionControl::SquareMission Mission;
+        //this will flag if we reset mission
+        bool newMission=true;
         float latitude = 46.786;
         float lon = 23.592;
-        int earthRadius=6371000 ;
         float lastRead[3] = {5, 5, 5};
         float newRead[3] = {6, 6, 6};
         float value = 0.f;
@@ -62,8 +64,6 @@ namespace OnBoard
         Estimator::PIDz OzController;
         Estimator::Integrator TranslationalVelocities;
         Estimator::Integrator RotationalVelocities;
-        float CosineInCluj(float angleInRadians);
-        float SineInCluj(float angleInRadians);
     public:
         Controller(uint32_t motorPin, uint32_t elevatorPin, uint32_t rudderPin, uint32_t aileronLeftPin, uint32_t aileronRightPin);
         void Setup(bool serial);

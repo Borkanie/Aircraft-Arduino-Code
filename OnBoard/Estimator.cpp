@@ -43,6 +43,16 @@ namespace Estimator
 		}
 		return os;
 	}*/
+
+	float SineInCluj(float angleInRadians)
+    {
+        return -0.7288 * angleInRadians * DegreesToRadianstConst + 1.28;
+    }
+
+    float CosineInCluj(float angleInRadians)
+    {
+        return 0.6847 * angleInRadians * DegreesToRadianstConst + 0.1697;
+    }
 #pragma region PIDz
 	PIDz::PIDz()
 	{

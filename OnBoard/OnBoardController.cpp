@@ -8,7 +8,6 @@
 #include <stdint.h>
 #include <string> // std::string, std::to_string
 // instantiate an object for the nRF24L01 transceiver
-#define DegreesToRadianstConst (PI / 180)
 namespace OnBoard
 {
     void Controller::InitializeRadioReciever()
@@ -57,8 +56,8 @@ namespace OnBoard
         // get latitude and longitude
         // display position
 
-        latitude = earthRadius * CosineInCluj(latitude) * CosineInCluj(latitude);
-        lon = earthRadius * CosineInCluj(lon) * CosineInCluj(lon);
+        // latitude = earthRadius * CosineInCluj(latitude) * CosineInCluj(latitude);
+        // lon = earthRadius * CosineInCluj(lon) * CosineInCluj(lon);
 
         SerialPrintLn("Done with GPS set up");
         ChangeState(OnBoardHelper::SETUP);
@@ -250,6 +249,10 @@ namespace OnBoard
                 ChangeState(OnBoardHelper::INDEPENDENT);
                 SerialPrintLn("AUTONOMOUS");
                 Estimator::Matrix control = CalculateControl();
+                if (newMission)
+                {
+                    Mission = MissionControl::SquareMission(latitude, lon);
+                }
                 // we need some mapping
                 analogWrite(this->MotorPin, ThrustToPwm(control.matrix[0][0]));    // this->payload[1]);
                 analogWrite(this->ElevatorPin, Rad2PWM(control.matrix[1][0], 0));  // this->payload[2]);
@@ -272,6 +275,15 @@ namespace OnBoard
         else
         {
             // SerialPrintLn("MANUAL");
+            if (newMission)
+            {
+                newMission = false;
+                //reset integral controller error
+                OyController.Read(0);
+                OzController.Read(0);
+                OyController.Read(0);
+                OzController.Read(0);
+            }
             radio.flush_rx();
             ChangeState(OnBoardHelper::ERROR);
             analogWrite(this->MotorPin, payload[0]);        // this->payload[1]);
@@ -301,8 +313,12 @@ namespace OnBoard
     {
         Estimator::Matrix control(5, 1);
         control = Kalman.DeltaInputs + Kalman.Inputs;
+        float* error = Mission.GetCurrentError(latitude,lon);
+        OyController.Read(error[0]);
+        OzController.Read(error[1]);
         control.matrix[2][0] += OyController.GetCommand();
         control.matrix[3][0] += OzController.GetCommand();
+        delete error;
         return control;
     }
 
@@ -320,7 +336,7 @@ namespace OnBoard
         }
         return (uint8_t)((result + offset) * 255 / pi);
     }
-    
+
     uint8_t ThrustToPwm(float thrust)
     {
         return (uint8_t)((thrust - ThrustCoeff[1]) / ThrustCoeff[0]);
@@ -333,28 +349,8 @@ namespace OnBoard
 
             if (gps.encode(Serial1.read())) // encode gps data
             {
-                gps.f_get_position(&relativeLat, &relativeLon);
-
-                // pe "x"
-                //positieActuala.matrix[0][0] = earthRadius * CosineInCluj(relativeLat) * CosineInCluj(relativeLon);
-                // pe "y"
-                float temp = earthRadius * CosineInCluj(relativeLat) * CosineInCluj(relativeLon);
-                // pe "z"
-                relativeLon = earthRadius * CosineInCluj(relativeLat) * CosineInCluj(relativeLon);
-                relativeLat=temp;
-                OyController.Read(lon-relativeLon);
-                OzController.Read(latitude-relativeLat);
+                gps.f_get_position(&latitude, &lon);
             }
         }
-    }
-
-    float Controller::SineInCluj(float angleInRadians)
-    {
-        return -0.7288 * angleInRadians * DegreesToRadianstConst + 1.28;
-    }
-
-    float Controller::CosineInCluj(float angleInRadians)
-    {
-        return 0.6847 * angleInRadians * DegreesToRadianstConst + 0.1697;
     }
 }
