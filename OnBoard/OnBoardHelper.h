@@ -18,9 +18,10 @@ namespace OnBoardHelper
     private:
    
     public:
-        AircraftConfiguration(uint32_t motorPin,uint32_t elevatorPin,uint32_t rudderPin, uint32_t aileronLeftPin,uint32_t aileronRightPin);
+        AircraftConfiguration(uint32_t motorPin,uint32_t elevatorPin1,uint32_t elevatorPin2,uint32_t rudderPin, uint32_t aileronLeftPin,uint32_t aileronRightPin);
         uint32_t MotorPin;
-        uint32_t ElevatorPin;
+        uint32_t ElevatorPin1;
+        uint32_t ElevatorPin2;
         uint32_t RudderPin;
         uint32_t AileronLeftPin;
         uint32_t AileronRightPin;  

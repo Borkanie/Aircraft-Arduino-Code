@@ -24,6 +24,7 @@
                 "C:\\Users\\Bogdan\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\sam\\1.6.12\\libraries\\Wire\\src",
                 "C:\\Users\\Bogdan\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\sam\\1.6.12\\libraries\\SPI\\src",
                 "C:\\Users\\Bogdan\\Documents\\Arduino\\libraries\\RF24",
+                "C:\\Users\\Bogdan\\Documents\\Arduino\\libraries\\Servo\\src",
                 "c:\\users\\bogdan\\appdata\\local\\arduino15\\packages\\arduino\\tools\\arm-none-eabi-gcc\\4.8.3-2014q1\\arm-none-eabi\\include\\c++\\4.8.3",
                 "c:\\users\\bogdan\\appdata\\local\\arduino15\\packages\\arduino\\tools\\arm-none-eabi-gcc\\4.8.3-2014q1\\arm-none-eabi\\include\\c++\\4.8.3\\arm-none-eabi",
                 "c:\\users\\bogdan\\appdata\\local\\arduino15\\packages\\arduino\\tools\\arm-none-eabi-gcc\\4.8.3-2014q1\\arm-none-eabi\\include\\c++\\4.8.3\\backward",

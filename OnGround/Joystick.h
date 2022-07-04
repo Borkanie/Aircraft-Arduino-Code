@@ -4,14 +4,14 @@
 
 namespace Controller
 {     
-volatile static bool AutonomosMode=false;
+volatile static bool AutonomosMode=true;
 void ChangeMode();
     enum ControlPins{
         Mode=2,
-        Motor=26,
+        Motor=29,
         Elevator=27,
         Rudder=28,
-        Aileron=29
+        Aileron=26
     };
     enum FlagPins{
         Normal=6,
@@ -29,10 +29,11 @@ void ChangeMode();
         int RudderValue;
         int AileronValue;
         FlagPins STATE;
-        uint16_t payload[5] = {0, 0, 0, 0, 0};
+        
         void SetupRadio();
         void SetupSerial();        
     public:
+        uint16_t payload[5] = {0, 0, 0, 0, 0};
         void SerialPrintLn(float text);
         void SerialPrintLn(String text);
         void Setup(bool serial);

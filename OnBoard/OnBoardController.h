@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include "Estimator.h"
 #include "MissionControl.h"
+#include "Servo.h"
 #pragma once
 
 // instantiate an object for the nRF24L01 transceiver
@@ -17,12 +18,18 @@ namespace OnBoard
     const float ThrustCoeff[2]={ 0.0328, -0.0813};
     // We expect to get the deflection angle of the surfaces in radians. 
     // We convert them to pwm for the servomotor.
-    uint8_t Rad2PWM(float radians, float offset = 0.4668);
+    int GetAngleFromDu(float radians,int offset=0);
+    //uint8_t Rad2PWM(float radians, float offset = 0.4668);
     // Converts thrust from newtons to PWM for motor.
     uint8_t ThrustToPwm(float thrust);
     class Controller : OnBoardHelper::AircraftConfiguration
     {
     private:
+        Servo AileronRight;
+        Servo AileronLeft;
+        Servo Elevator1;
+        Servo Elevator2;
+        Servo Rudder;
     //this will gives us the position error to the current mission
         MissionControl::SquareMission Mission;
         //this will flag if we reset mission
@@ -53,7 +60,7 @@ namespace OnBoard
         void WriteCurrentReadings();
         bool ReadRadio();
         void ChangeState(OnBoardHelper::States newState);
-        void InterpretPayload();
+        void InterpretCommand();
         bool ReadDifference();
         void CalculateDiff();
         bool ReadMPU();
@@ -65,7 +72,7 @@ namespace OnBoard
         Estimator::Integrator TranslationalVelocities;
         Estimator::Integrator RotationalVelocities;
     public:
-        Controller(uint32_t motorPin, uint32_t elevatorPin, uint32_t rudderPin, uint32_t aileronLeftPin, uint32_t aileronRightPin);
+        Controller(uint32_t motorPin, uint32_t elevatorPin1,uint32_t elevatorPin2, uint32_t rudderPin, uint32_t aileronLeftPin, uint32_t aileronRightPin);
         void Setup(bool serial);
         void InterpretComand();
         void ReadDataFromSensors();

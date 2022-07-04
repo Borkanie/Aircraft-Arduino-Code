@@ -74,9 +74,9 @@ namespace OnBoard
             delay(10);
         }
 
-        this->newRead[0] = this->mpu.getQuaternionX();
-        this->newRead[1] = this->mpu.getQuaternionY();
-        this->newRead[2] = this->mpu.getQuaternionZ();
+        this->newRead[0] = this->mpu.getEulerX();
+        this->newRead[1] = this->mpu.getEulerY();
+        this->newRead[2] = this->mpu.getEulerZ();
         SerialPrintLn("Waiting for MPU calibration:");
         while (!ReadDifference())
         {
@@ -117,9 +117,9 @@ namespace OnBoard
             this->lastRead[1] = this->newRead[1];
             this->lastRead[2] = this->newRead[2];
             // WriteCurrentReadings();
-            this->newRead[0] = this->mpu.getQuaternionX();
-            this->newRead[1] = this->mpu.getQuaternionY();
-            this->newRead[2] = this->mpu.getQuaternionZ();
+            this->newRead[0] = this->mpu.getEulerX();
+            this->newRead[1] = this->mpu.getEulerY();
+            this->newRead[2] = this->mpu.getEulerZ();
             return true;
         }
         return false;
@@ -180,26 +180,8 @@ namespace OnBoard
             digitalWrite(this->state, 1);
         }
     }
-    void Controller::InterpretPayload()
-    {
-        if (payload[0] > 0)
-        {
-            ChangeState(OnBoardHelper::INDEPENDENT);
-            ReadDataFromSensors();
-            InterpretComand();
-        }
-        else
-        {
-            ChangeState(OnBoardHelper::NORMAL);
-            analogWrite(MotorPin, payload[1] * 4);        // Thrust set pwm
-            analogWrite(ElevatorPin, payload[2] * 4);     // Elevator set pwm
-            analogWrite(RudderPin, payload[3] * 4);       // Rudder set pwm
-            analogWrite(AileronLeftPin, payload[4] * 4);  // Aileron Left set pwm
-            analogWrite(AileronRightPin, payload[5] * 4); // Aileron Right set pwm
-        }
-    }
 
-    Controller::Controller(uint32_t motorPin, uint32_t elevatorPin, uint32_t rudderPin, uint32_t aileronLeftPin, uint32_t aileronRightPin) : AircraftConfiguration(motorPin, elevatorPin, rudderPin, aileronLeftPin, aileronRightPin)
+    Controller::Controller(uint32_t motorPin, uint32_t elevatorPin1,uint32_t elevatorPin2, uint32_t rudderPin, uint32_t aileronLeftPin, uint32_t aileronRightPin) : AircraftConfiguration(motorPin, elevatorPin1,elevatorPin2, rudderPin, aileronLeftPin, aileronRightPin)
     {
     }
 
@@ -225,16 +207,22 @@ namespace OnBoard
         ChangeState(OnBoardHelper::ERROR);
         delay(500);
         ChangeState(OnBoardHelper::SETUP);
+
         pinMode(this->MotorPin, OUTPUT);
-        pinMode(this->ElevatorPin, OUTPUT);
-        pinMode(this->RudderPin, OUTPUT);
-        pinMode(this->AileronLeftPin, OUTPUT);
-        pinMode(this->AileronRightPin, OUTPUT);
+        Elevator1.attach(this->ElevatorPin1);
+        //pinMode(this->ElevatorPin, OUTPUT);
+        Elevator2.attach(this->ElevatorPin2);
+        //pinMode(this->RudderPin, OUTPUT);
+        Rudder.attach(this->RudderPin);
+        //pinMode(this->AileronLeftPin, OUTPUT);
+        AileronLeft.attach(this->AileronLeftPin);
+        //pinMode(this->AileronRightPin, OUTPUT);
+        AileronRight.attach(this->AileronRightPin);
         this->PcSerial = serial;
         InitializeSerial();
         InitializeMPU();
         InitializeRadioReciever();
-        InitializeGPS();
+        //InitializeGPS();
         ChangeState(OnBoardHelper::NORMAL);
         InitializeControllers();
     }
@@ -248,28 +236,36 @@ namespace OnBoard
                 radio.flush_rx();
                 ChangeState(OnBoardHelper::INDEPENDENT);
                 SerialPrintLn("AUTONOMOUS");
-                Estimator::Matrix control = CalculateControl();
+                //create new mission
                 if (newMission)
                 {
                     Mission = MissionControl::SquareMission(latitude, lon);
+                    //Mission = MissionControl::SquareMission(0, 0);
                 }
+                Estimator::Matrix control = CalculateControl();
+               
                 // we need some mapping
                 analogWrite(this->MotorPin, ThrustToPwm(control.matrix[0][0]));    // this->payload[1]);
-                analogWrite(this->ElevatorPin, Rad2PWM(control.matrix[1][0], 0));  // this->payload[2]);
-                analogWrite(this->RudderPin, Rad2PWM(control.matrix[2][0], 0));    // this->payload[3]);
-                analogWrite(this->AileronLeftPin, Rad2PWM(control.matrix[3][0]));  // this->payload[4]);
-                analogWrite(this->AileronRightPin, Rad2PWM(control.matrix[4][0])); // 1034 - this->payload[4]);
+                Elevator1.write(GetAngleFromDu(control.matrix[1][0]));
+                Elevator2.write(GetAngleFromDu(control.matrix[1][0]));
+                Rudder.write(GetAngleFromDu(control.matrix[2][0]));
+                AileronLeft.write(GetAngleFromDu(control.matrix[3][0],165));
+                AileronRight.write(GetAngleFromDu(control.matrix[4][0],25));
+                //analogWrite(this->ElevatorPin, Rad2PWM(control.matrix[1][0], 0));  // this->payload[2]);
+                //analogWrite(this->RudderPin, Rad2PWM(control.matrix[2][0], 0));    // this->payload[3]);
+                //analogWrite(this->AileronLeftPin, Rad2PWM(control.matrix[3][0]));  // this->payload[4]);
+                //analogWrite(this->AileronRightPin, Rad2PWM(control.matrix[4][0])); // 1034 - this->payload[4]);
             }
             else
             {
                 radio.flush_rx();
                 ChangeState(OnBoardHelper::NORMAL);
                 SerialPrintLn("MANUAL");
-                analogWrite(this->MotorPin, payload[0]);        // this->payload[1]);
-                analogWrite(this->ElevatorPin, payload[1]);     // this->payload[2]);
-                analogWrite(this->RudderPin, payload[2]);       // this->payload[3]);
-                analogWrite(this->AileronLeftPin, payload[3]);  // this->payload[4]);
-                analogWrite(this->AileronRightPin, payload[4]); // 1034 - this->payload[4]);
+                InterpretCommand();
+                //analogWrite(this->ElevatorPin, payload[1]);     // this->payload[2]);
+                //analogWrite(this->RudderPin, payload[2]);       // this->payload[3]);
+                //analogWrite(this->AileronLeftPin, payload[3]);  // this->payload[4]);
+                //analogWrite(this->AileronRightPin, payload[4]); // 1034 - this->payload[4]);
             }
         }
         else
@@ -286,18 +282,36 @@ namespace OnBoard
             }
             radio.flush_rx();
             ChangeState(OnBoardHelper::ERROR);
-            analogWrite(this->MotorPin, payload[0]);        // this->payload[1]);
-            analogWrite(this->ElevatorPin, payload[1]);     // this->payload[2]);
-            analogWrite(this->RudderPin, payload[2]);       // this->payload[3]);
-            analogWrite(this->AileronLeftPin, payload[3]);  // this->payload[4]);
-            analogWrite(this->AileronRightPin, payload[4]); // 1034 - this->payload[4]);
+            InterpretCommand();
         }
+    }
+
+    void Controller::InterpretCommand(){
+            analogWrite(this->MotorPin, payload[1]);        // this->payload[1]);
+                Elevator1.write(GetAngleFromDu(payload[2],90));
+                Elevator2.write(GetAngleFromDu(255-payload[2],90));
+                Serial.print("  Elevator:");
+                Serial.print(payload[1]);
+                Rudder.write(GetAngleFromDu(255-payload[3],110));
+                Serial.print("  Rudder:");
+                Serial.print(GetAngleFromDu(payload[3],110));
+                AileronLeft.write(GetAngleFromDu(payload[4],65));
+                Serial.print("  AileronLeft:");
+                Serial.print(GetAngleFromDu(payload[4],65));
+                AileronRight.write(GetAngleFromDu(payload[4],90));
+                Serial.print("  AileronRight:");
+                Serial.println(GetAngleFromDu(payload[4],90));
+    }
+    
+    int GetAngleFromDu(float radians,int offset){
+        int rads=map(radians,0,255,-35,35);
+        return (int)(offset+rads);
     }
 
     void Controller::ReadDataFromSensors()
     {
-        ReadMPU();
         ReadRadio();
+        ReadMPU();        
         ReadGPS();
         Estimator::Matrix readings(9, 1);
         readings.CopyBloc(TranslationalVelocities.GetValue(), 0, 0);
@@ -314,6 +328,7 @@ namespace OnBoard
         Estimator::Matrix control(5, 1);
         control = Kalman.DeltaInputs + Kalman.Inputs;
         float* error = Mission.GetCurrentError(latitude,lon);
+        // float* error = Mission.GetCurrentError(0,0);
         OyController.Read(error[0]);
         OzController.Read(error[1]);
         control.matrix[2][0] += OyController.GetCommand();
@@ -322,20 +337,6 @@ namespace OnBoard
         return control;
     }
 
-    uint8_t Rad2PWM(float radians, float offset)
-    {
-        float result;
-        if (abs(radians) > PI / 6)
-        {
-            int n = (int)(radians / (PI / 6));
-            result = radians - n * PI / 6;
-        }
-        else
-        {
-            result = radians;
-        }
-        return (uint8_t)((result + offset) * 255 / pi);
-    }
 
     uint8_t ThrustToPwm(float thrust)
     {
