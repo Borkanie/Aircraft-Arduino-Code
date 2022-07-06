@@ -68,10 +68,11 @@ namespace OnBoard
         Wire.begin();
         delay(2000);
         ChangeState(OnBoardHelper::ERROR);
-        this->mpu.setup(0x68);
+        this->mpu.setup(0x69);
         while (!this->mpu.available())
         {
             delay(10);
+            this->mpu.setup(0x68);
         }
 
         this->newRead[0] = this->mpu.getEulerX();
@@ -92,6 +93,7 @@ namespace OnBoard
         if (this->ReadMPU())
         {
             this->CalculateDiff();
+            // Serial.println(this->value);
             return (this->value <= this->tolerance) && (this->value > 0.003f);
         }
         return false;
@@ -117,9 +119,9 @@ namespace OnBoard
             this->lastRead[1] = this->newRead[1];
             this->lastRead[2] = this->newRead[2];
             // WriteCurrentReadings();
-            this->newRead[0] = this->mpu.getEulerX();
-            this->newRead[1] = this->mpu.getEulerY();
-            this->newRead[2] = this->mpu.getEulerZ();
+            this->newRead[0] = this->mpu.getEulerX() * PI / 180;
+            this->newRead[1] = this->mpu.getEulerY() * PI / 180;
+            this->newRead[2] = this->mpu.getEulerZ() * PI / 180;
             return true;
         }
         return false;
@@ -181,7 +183,7 @@ namespace OnBoard
         }
     }
 
-    Controller::Controller(uint32_t motorPin, uint32_t elevatorPin1,uint32_t elevatorPin2, uint32_t rudderPin, uint32_t aileronLeftPin, uint32_t aileronRightPin) : AircraftConfiguration(motorPin, elevatorPin1,elevatorPin2, rudderPin, aileronLeftPin, aileronRightPin)
+    Controller::Controller(uint32_t motorPin, uint32_t elevatorPin1, uint32_t elevatorPin2, uint32_t rudderPin, uint32_t aileronLeftPin, uint32_t aileronRightPin) : AircraftConfiguration(motorPin, elevatorPin1, elevatorPin2, rudderPin, aileronLeftPin, aileronRightPin)
     {
     }
 
@@ -208,21 +210,38 @@ namespace OnBoard
         delay(500);
         ChangeState(OnBoardHelper::SETUP);
 
-        pinMode(this->MotorPin, OUTPUT);
+        Motor.attach(this->MotorPin, 1000, 2000);
+        Motor.write(0);
         Elevator1.attach(this->ElevatorPin1);
-        //pinMode(this->ElevatorPin, OUTPUT);
+        // pinMode(this->ElevatorPin, OUTPUT);
         Elevator2.attach(this->ElevatorPin2);
-        //pinMode(this->RudderPin, OUTPUT);
+        // pinMode(this->RudderPin, OUTPUT);
         Rudder.attach(this->RudderPin);
-        //pinMode(this->AileronLeftPin, OUTPUT);
+        // pinMode(this->AileronLeftPin, OUTPUT);
         AileronLeft.attach(this->AileronLeftPin);
-        //pinMode(this->AileronRightPin, OUTPUT);
+        // pinMode(this->AileronRightPin, OUTPUT);
         AileronRight.attach(this->AileronRightPin);
         this->PcSerial = serial;
         InitializeSerial();
         InitializeMPU();
         InitializeRadioReciever();
-        //InitializeGPS();
+        // InitializeGPS();
+        if (SimpleMission)
+        {
+            for (int i = 0; i < 5; i++)
+            {
+                Kalman.Inputs.matrix[i][0] = 0;
+            }
+            for (int i = 0; i < 6; i++)
+            {
+                Kalman.States.matrix[i][0] = 0;
+            }
+            ReadMPU();
+            for (int i = 6; i < 9; i++)
+            {
+                Kalman.States.matrix[i][0] = newRead[i - 6];
+            }
+        }
         ChangeState(OnBoardHelper::NORMAL);
         InitializeControllers();
     }
@@ -235,90 +254,124 @@ namespace OnBoard
             {
                 radio.flush_rx();
                 ChangeState(OnBoardHelper::INDEPENDENT);
-                SerialPrintLn("AUTONOMOUS");
-                //create new mission
+                // SerialPrintLn("AUTONOMOUS");
+                // create new mission
                 if (newMission)
                 {
-                    Mission = MissionControl::SquareMission(latitude, lon);
-                    //Mission = MissionControl::SquareMission(0, 0);
+                    newMission=false;
+                    if (SimpleMission)
+                    {
+                        for (int i = 0; i < 5; i++)
+                        {
+                            Kalman.Inputs.matrix[i][0] = 0;
+                        }
+                        for (int i = 0; i < 6; i++)
+                        {
+                            Kalman.States.matrix[i][0] = 0;
+                        }
+                        ReadMPU();
+                        for (int i = 6; i < 9; i++)
+                        {
+                            Kalman.States.matrix[i][0] = newRead[i - 6];
+                        }
+                        WriteCurrentReadings();
+                    }
+                    else
+                    {
+                        Mission = MissionControl::SquareMission(latitude, lon);
+                    }
                 }
                 Estimator::Matrix control = CalculateControl();
-               
                 // we need some mapping
-                analogWrite(this->MotorPin, ThrustToPwm(control.matrix[0][0]));    // this->payload[1]);
-                Elevator1.write(GetAngleFromDu(control.matrix[1][0]));
-                Elevator2.write(GetAngleFromDu(control.matrix[1][0]));
-                Rudder.write(GetAngleFromDu(control.matrix[2][0]));
-                AileronLeft.write(GetAngleFromDu(control.matrix[3][0],165));
-                AileronRight.write(GetAngleFromDu(control.matrix[4][0],25));
-                //analogWrite(this->ElevatorPin, Rad2PWM(control.matrix[1][0], 0));  // this->payload[2]);
-                //analogWrite(this->RudderPin, Rad2PWM(control.matrix[2][0], 0));    // this->payload[3]);
-                //analogWrite(this->AileronLeftPin, Rad2PWM(control.matrix[3][0]));  // this->payload[4]);
-                //analogWrite(this->AileronRightPin, Rad2PWM(control.matrix[4][0])); // 1034 - this->payload[4]);
+                Motor.write(GetAngleFromDu(control.matrix[1][0], 150));
+                Elevator1.write(GetAngleFromDu(control.matrix[2][0], 90));
+                Elevator2.write(GetAngleFromDu(-control.matrix[2][0], 90));
+                Rudder.write(GetAngleFromDu(-control.matrix[3][0], 110));
+                AileronLeft.write(GetAngleFromDu(control.matrix[4][0], 65));
+                AileronRight.write(GetAngleFromDu(control.matrix[4][0], 90));
             }
             else
             {
                 radio.flush_rx();
                 ChangeState(OnBoardHelper::NORMAL);
-                SerialPrintLn("MANUAL");
-                InterpretCommand();
-                //analogWrite(this->ElevatorPin, payload[1]);     // this->payload[2]);
-                //analogWrite(this->RudderPin, payload[2]);       // this->payload[3]);
-                //analogWrite(this->AileronLeftPin, payload[3]);  // this->payload[4]);
-                //analogWrite(this->AileronRightPin, payload[4]); // 1034 - this->payload[4]);
+                newMission=true;
+                // SerialPrintLn("MANUAL");
+                InterpretRadioCommand();
             }
         }
         else
         {
-            // SerialPrintLn("MANUAL");
-            if (newMission)
-            {
-                newMission = false;
-                //reset integral controller error
-                OyController.Read(0);
-                OzController.Read(0);
-                OyController.Read(0);
-                OzController.Read(0);
-            }
             radio.flush_rx();
             ChangeState(OnBoardHelper::ERROR);
-            InterpretCommand();
+
+            if (payload[0] != 1)
+            {
+                // SerialPrintLn("AUTONOMOUS");
+                // create new mission
+                if (newMission)
+                {
+                    Mission = MissionControl::SquareMission(latitude, lon);
+                }
+                Estimator::Matrix control = CalculateControl();
+                // we need some mapping
+                Motor.write(GetAngleFromDu(control.matrix[1][0], 135));
+                Elevator1.write(GetAngleFromDu(control.matrix[2][0], 90));
+                Elevator2.write(GetAngleFromDu(-control.matrix[2][0], 90));
+                Rudder.write(GetAngleFromDu(-control.matrix[3][0], 110));
+                AileronLeft.write(GetAngleFromDu(control.matrix[4][0], 65));
+                AileronRight.write(GetAngleFromDu(control.matrix[4][0], 90));
+            }
+            else
+            {
+                radio.flush_rx();
+                // SerialPrintLn("MANUAL");
+                InterpretRadioCommand();
+            }
         }
     }
 
-    void Controller::InterpretCommand(){
-            analogWrite(this->MotorPin, payload[1]);        // this->payload[1]);
-                Elevator1.write(GetAngleFromDu(payload[2],90));
-                Elevator2.write(GetAngleFromDu(255-payload[2],90));
-                Serial.print("  Elevator:");
-                Serial.print(payload[1]);
-                Rudder.write(GetAngleFromDu(255-payload[3],110));
-                Serial.print("  Rudder:");
-                Serial.print(GetAngleFromDu(payload[3],110));
-                AileronLeft.write(GetAngleFromDu(payload[4],65));
-                Serial.print("  AileronLeft:");
-                Serial.print(GetAngleFromDu(payload[4],65));
-                AileronRight.write(GetAngleFromDu(payload[4],90));
-                Serial.print("  AileronRight:");
-                Serial.println(GetAngleFromDu(payload[4],90));
+    void Controller::InterpretRadioCommand()
+    {
+        // analogWrite(this->MotorPin, payload[1]);        // this->payload[1]);
+        Motor.write(map(payload[1], 0, 255, 0, 180));
+        Elevator1.write(GetAngleFromMessage(payload[2], 90));
+        Elevator2.write(GetAngleFromMessage(255 - payload[2], 90));
+        Rudder.write(GetAngleFromMessage(255 - payload[3], 110));
+        AileronLeft.write(GetAngleFromMessage(payload[4], 65));
+        AileronRight.write(GetAngleFromMessage(payload[4], 90));
     }
-    
-    int GetAngleFromDu(float radians,int offset){
-        int rads=map(radians,0,255,-35,35);
-        return (int)(offset+rads);
+
+    int GetAngleFromDu(float radians, int offset)
+    {
+        if (radians > pi / 2)
+        {
+            radians = pi / 2;
+        }
+        else if (radians < -pi / 2)
+        {
+            radians = -pi / 2;
+        }
+        int rads = map(radians, -pi / 2, pi / 2, -45, 45);
+        return (offset + rads);
+    }
+
+    int GetAngleFromMessage(int radians, int offset)
+    {
+        int rads = map(radians, 0, 255, -45, 45);
+        return (offset + rads);
     }
 
     void Controller::ReadDataFromSensors()
     {
         ReadRadio();
-        ReadMPU();        
+        ReadMPU();
         ReadGPS();
         Estimator::Matrix readings(9, 1);
         readings.CopyBloc(TranslationalVelocities.GetValue(), 0, 0);
         readings.CopyBloc(RotationalVelocities.GetValue(), 3, 0);
+        readings.matrix[6][0] = newRead[0];
         readings.matrix[7][0] = newRead[0];
         readings.matrix[8][0] = newRead[0];
-        readings.matrix[9][0] = newRead[0];
 
         Kalman.DoKalmanAlgorithm(readings);
     }
@@ -327,16 +380,31 @@ namespace OnBoard
     {
         Estimator::Matrix control(5, 1);
         control = Kalman.DeltaInputs + Kalman.Inputs;
-        float* error = Mission.GetCurrentError(latitude,lon);
-        // float* error = Mission.GetCurrentError(0,0);
-        OyController.Read(error[0]);
-        OzController.Read(error[1]);
-        control.matrix[2][0] += OyController.GetCommand();
-        control.matrix[3][0] += OzController.GetCommand();
-        delete error;
+        /*
+        Serial.print("(control) :");
+        Serial.print( Kalman.DeltaInputs.matrix[0][0]);
+        Serial.print(",");
+        Serial.print( Kalman.DeltaInputs.matrix[1][0]);
+        Serial.print(",");
+         Serial.print( Kalman.DeltaInputs.matrix[2][0]);
+        Serial.print(",");
+         Serial.print( Kalman.DeltaInputs.matrix[3][0]);
+        Serial.print(",");
+         Serial.println( Kalman.DeltaInputs.matrix[4][0]);*/
+
+        if (!SimpleMission)
+        {
+            float *error;
+            error = Mission.GetCurrentError(latitude, lon);
+            OyController.Read(error[0]);
+            OzController.Read(error[1]);
+            control.matrix[2][0] += OyController.GetCommand();
+            control.matrix[3][0] += OzController.GetCommand();
+            delete error;
+        }
+
         return control;
     }
-
 
     uint8_t ThrustToPwm(float thrust)
     {

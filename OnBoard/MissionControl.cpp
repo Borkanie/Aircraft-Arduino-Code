@@ -16,7 +16,6 @@ namespace MissionControl {
 	float Point::GetLongitude() {
 		return matrix[1][0];
 	}
-
 	void Point::SetLatitude(float lat) {
 		matrix[0][0] = lat;
 	}
@@ -24,7 +23,7 @@ namespace MissionControl {
 		matrix[1][0] = lon;
 	}
 
-
+#pragma region SquareMission
 	SquareMission& SquareMission::operator=(const SquareMission& other)
 	{
 		this->points[0] = other.points[0];
@@ -202,4 +201,6 @@ namespace MissionControl {
 			return result;
 		}
 	}
+#pragma endregion
+
 }

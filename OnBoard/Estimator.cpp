@@ -1,4 +1,5 @@
 #include "Estimator.h"
+#include "Arduino.h"
 //#include <iostream>
 
 namespace Estimator
@@ -132,6 +133,8 @@ namespace Estimator
 #pragma region Integrator
 	Integrator::Integrator() {
 		SamplingTime = 0;
+		evaluatedValue=Matrix(1,1);
+		evaluatedValue.matrix[0][0]=0;
 	}
 	Integrator::Integrator(Matrix matrix, float samplingTime) {
 		evaluatedValue = matrix;
@@ -501,6 +504,26 @@ namespace Estimator
 		//KalmanGain = Ppred * CE.Transpose() * temp.Inverse();
 		//std::cout << "KalmanGain= " << KalmanGain << std::endl;
 		//std::cout << "CE * Ppred * CE.Transpose() + R= " << temp << std::endl;
+		/*
+		Serial.print("(readings - States) :");
+		Matrix error=(readings - States);
+        Serial.print( error.matrix[0][0]);
+        Serial.print(",");
+        Serial.print( error.matrix[1][0]);
+        Serial.print(",");
+		 Serial.print( error.matrix[2][0]);
+        Serial.print(",");
+		 Serial.print( error.matrix[3][0]);
+        Serial.print(",");
+		 Serial.print( error.matrix[4][0]);
+        Serial.print(",");
+		 Serial.print( error.matrix[5][0]);
+        Serial.print(",");
+		 Serial.print( error.matrix[6][0]);
+        Serial.print(",");
+		 Serial.print( error.matrix[7][0]);
+        Serial.print(",");
+		 Serial.println( error.matrix[8][0]);*/
 		//std::cout << "(readings - States)  " << (readings - States)  << std::endl;
 		DeltaStates = Xpred + KalmanGain * ((readings - States) - CE * Xpred);
 		//std::cout << "DeltaStates= " << DeltaStates << std::endl;

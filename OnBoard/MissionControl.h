@@ -13,7 +13,8 @@ namespace MissionControl {
 		void SetLatitude(float lat);
 		void SetLongitude(float lon);
 	};
-
+	
+	#pragma region SquareMission
 	class SquareMission {
 	private:
 	public:
@@ -25,5 +26,7 @@ namespace MissionControl {
 		int currentPosition = 0;
 		float offset = 0.004;
 	};
+	#pragma endregion
+
 }
 

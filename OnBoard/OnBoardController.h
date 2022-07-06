@@ -19,12 +19,16 @@ namespace OnBoard
     // We expect to get the deflection angle of the surfaces in radians. 
     // We convert them to pwm for the servomotor.
     int GetAngleFromDu(float radians,int offset=0);
+    // We expect to get the deflection angle of the surfaces in radians. 
+    // We convert them to pwm for the servomotor.
+    int GetAngleFromMessage(int radians,int offset=0);
     //uint8_t Rad2PWM(float radians, float offset = 0.4668);
     // Converts thrust from newtons to PWM for motor.
     uint8_t ThrustToPwm(float thrust);
     class Controller : OnBoardHelper::AircraftConfiguration
     {
     private:
+        Servo Motor;
         Servo AileronRight;
         Servo AileronLeft;
         Servo Elevator1;
@@ -36,10 +40,10 @@ namespace OnBoard
         bool newMission=true;
         float latitude = 46.786;
         float lon = 23.592;
-        float lastRead[3] = {5, 5, 5};
-        float newRead[3] = {6, 6, 6};
+        float lastRead[3] = {10, 10, 10};
+        float newRead[3] = {0, 0, 0};
         float value = 0.f;
-        const float tolerance = 0.1;
+        const float tolerance = 10;
         OnBoardHelper::States state;
         MPU9250 mpu; // create mpu object
         TinyGPS gps; // create gps object
@@ -60,18 +64,20 @@ namespace OnBoard
         void WriteCurrentReadings();
         bool ReadRadio();
         void ChangeState(OnBoardHelper::States newState);
-        void InterpretCommand();
+        void InterpretRadioCommand();
         bool ReadDifference();
         void CalculateDiff();
         bool ReadMPU();
         void ReadGPS();
         void InitializeControllers();
-        Estimator::FixedSizeSystem Kalman;
         Estimator::PIDz OyController;
         Estimator::PIDz OzController;
         Estimator::Integrator TranslationalVelocities;
         Estimator::Integrator RotationalVelocities;
     public:
+
+        Estimator::FixedSizeSystem Kalman;
+        bool SimpleMission=true;
         Controller(uint32_t motorPin, uint32_t elevatorPin1,uint32_t elevatorPin2, uint32_t rudderPin, uint32_t aileronLeftPin, uint32_t aileronRightPin);
         void Setup(bool serial);
         void InterpretComand();
