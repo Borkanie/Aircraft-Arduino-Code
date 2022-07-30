@@ -43,11 +43,16 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 class TinyGPS
 {
 public:
-  enum {
-    GPS_INVALID_AGE = 0xFFFFFFFF,      GPS_INVALID_ANGLE = 999999999, 
-    GPS_INVALID_ALTITUDE = 999999999,  GPS_INVALID_DATE = 0,
-    GPS_INVALID_TIME = 0xFFFFFFFF,		 GPS_INVALID_SPEED = 999999999, 
-    GPS_INVALID_FIX_TIME = 0xFFFFFFFF, GPS_INVALID_SATELLITES = 0xFF,
+  enum
+  {
+    GPS_INVALID_AGE = 0xFFFFFFFF,
+    GPS_INVALID_ANGLE = 999999999,
+    GPS_INVALID_ALTITUDE = 999999999,
+    GPS_INVALID_DATE = 0,
+    GPS_INVALID_TIME = 0xFFFFFFFF,
+    GPS_INVALID_SPEED = 999999999,
+    GPS_INVALID_FIX_TIME = 0xFFFFFFFF,
+    GPS_INVALID_SATELLITES = 0xFF,
     GPS_INVALID_HDOP = 0xFFFFFFFF
   };
 
@@ -55,7 +60,11 @@ public:
 
   TinyGPS();
   bool encode(char c); // process one character received from GPS
-  TinyGPS &operator << (char c) {encode(c); return *this;}
+  TinyGPS &operator<<(char c)
+  {
+    encode(c);
+    return *this;
+  }
 
   // lat/long in MILLIONTHs of a degree and age of fix in milliseconds
   // (note: versions 12 and earlier gave lat/long in 100,000ths of a degree.
@@ -80,8 +89,8 @@ public:
   inline unsigned long hdop() { return _hdop; }
 
   void f_get_position(float *latitude, float *longitude, unsigned long *fix_age = 0);
-  void crack_datetime(int *year, byte *month, byte *day, 
-    byte *hour, byte *minute, byte *second, byte *hundredths = 0, unsigned long *fix_age = 0);
+  void crack_datetime(int *year, byte *month, byte *day,
+                      byte *hour, byte *minute, byte *second, byte *hundredths = 0, unsigned long *fix_age = 0);
   float f_altitude();
   float f_course();
   float f_speed_knots();
@@ -91,8 +100,8 @@ public:
 
   static int library_version() { return _GPS_VERSION; }
 
-  static float distance_between (float lat1, float long1, float lat2, float long2);
-  static float course_to (float lat1, float long1, float lat2, float long2);
+  static float distance_between(float lat1, float long1, float lat2, float long2);
+  static float course_to(float lat1, float long1, float lat2, float long2);
   static const char *cardinal(float course);
 
 #ifndef _GPS_NO_STATS
@@ -100,7 +109,12 @@ public:
 #endif
 
 private:
-  enum {_GPS_SENTENCE_GPGGA, _GPS_SENTENCE_GPRMC, _GPS_SENTENCE_OTHER};
+  enum
+  {
+    _GPS_SENTENCE_GPGGA,
+    _GPS_SENTENCE_GPRMC,
+    _GPS_SENTENCE_OTHER
+  };
 
   // properties
   unsigned long _time, _new_time;
@@ -108,9 +122,9 @@ private:
   long _latitude, _new_latitude;
   long _longitude, _new_longitude;
   long _altitude, _new_altitude;
-  unsigned long  _speed, _new_speed;
-  unsigned long  _course, _new_course;
-  unsigned long  _hdop, _new_hdop;
+  unsigned long _speed, _new_speed;
+  unsigned long _course, _new_course;
+  unsigned long _hdop, _new_hdop;
   unsigned short _numsats, _new_numsats;
 
   unsigned long _last_time_fix, _new_time_fix;
@@ -143,7 +157,7 @@ private:
   int gpsstrcmp(const char *str1, const char *str2);
 };
 
-#if !defined(ARDUINO) 
+#if !defined(ARDUINO)
 // Arduino 0012 workaround
 #undef int
 #undef char
@@ -151,7 +165,7 @@ private:
 #undef byte
 #undef float
 #undef abs
-#undef round 
+#undef round
 #endif
 
 #endif

@@ -1,30 +1,37 @@
 #include "MissionControl.h"
 #include "Estimator.h"
 
-namespace MissionControl {
-	Point::Point() :Matrix::Matrix(2, 1) {
+namespace MissionControl
+{
+	Point::Point() : Matrix::Matrix(2, 1)
+	{
 		matrix[0][0] = 0;
 		matrix[1][0] = 0;
 	}
-	Point::Point(float lat, float lon) : Matrix::Matrix(2, 1) {
+	Point::Point(float lat, float lon) : Matrix::Matrix(2, 1)
+	{
 		matrix[0][0] = lat;
 		matrix[1][0] = lon;
 	}
-	float Point::GetLatitude() {
+	float Point::GetLatitude()
+	{
 		return matrix[0][0];
 	}
-	float Point::GetLongitude() {
+	float Point::GetLongitude()
+	{
 		return matrix[1][0];
 	}
-	void Point::SetLatitude(float lat) {
+	void Point::SetLatitude(float lat)
+	{
 		matrix[0][0] = lat;
 	}
-	void Point::SetLongitude(float lon) {
+	void Point::SetLongitude(float lon)
+	{
 		matrix[1][0] = lon;
 	}
 
 #pragma region SquareMission
-	SquareMission& SquareMission::operator=(const SquareMission& other)
+	SquareMission &SquareMission::operator=(const SquareMission &other)
 	{
 		this->points[0] = other.points[0];
 		this->points[1] = other.points[1];
@@ -35,10 +42,11 @@ namespace MissionControl {
 		return *this;
 	}
 
-	SquareMission::SquareMission() {
+	SquareMission::SquareMission()
+	{
 		float baseLat = 0;
 		float baseLong = 0;
-		//point 1 will be the current postion
+		// point 1 will be the current postion
 		points[0].SetLatitude(baseLat);
 		points[0].SetLongitude(baseLong);
 		// Added on longitude  0.002
@@ -56,8 +64,9 @@ namespace MissionControl {
 		points[3].SetLongitude(baseLong + offset);
 	}
 
-	SquareMission::SquareMission(float baseLat, float baseLong) {
-		//point 1 will be the current postion
+	SquareMission::SquareMission(float baseLat, float baseLong)
+	{
+		// point 1 will be the current postion
 		points[0].SetLatitude(baseLat);
 		points[0].SetLongitude(baseLong);
 		// Added on longitude  0.002
@@ -74,7 +83,8 @@ namespace MissionControl {
 		points[3].SetLatitude(baseLat);
 		points[3].SetLongitude(baseLong + offset);
 	}
-	float* SquareMission::GetCurrentError(float currentLat, float currentLon) {
+	float *SquareMission::GetCurrentError(float currentLat, float currentLon)
+	{
 		float Lat = currentLat * DegreesToRadianstConst;
 		float Lon = currentLon * DegreesToRadianstConst;
 
@@ -82,19 +92,19 @@ namespace MissionControl {
 		float y = earthRadius * Estimator::CosineInCluj(Lat) * Estimator::SineInCluj(Lon);
 		float z = earthRadius * Estimator::SineInCluj(Lon);
 
-		float pointLat ;
-		float pointLon ;
-		float pointx ;
-		float pointy ;
+		float pointLat;
+		float pointLon;
+		float pointx;
+		float pointy;
 		float pointz;
 
-		float* result = new float[2];
+		float *result = new float[2];
 		switch (currentPosition)
 		{
 		case 0:
 			if (currentLat < points[1].GetLatitude())
 			{
-				//we go north to point 1
+				// we go north to point 1
 				pointLat = points[1].GetLatitude() * DegreesToRadianstConst;
 				pointLon = points[1].GetLongitude() * DegreesToRadianstConst;
 				pointx = earthRadius * Estimator::CosineInCluj(pointLat) * Estimator::CosineInCluj(pointLon);
@@ -102,12 +112,12 @@ namespace MissionControl {
 				pointz = earthRadius * Estimator::SineInCluj(pointLon);
 				result[0] = pointz - z;
 				result[1] = pointy - y;
-				
 			}
-			else {
-				//we got over the point
+			else
+			{
+				// we got over the point
 				currentPosition = 1;
-				//we go east to point 2
+				// we go east to point 2
 				pointLat = points[2].GetLatitude() * DegreesToRadianstConst;
 				pointLon = points[2].GetLongitude() * DegreesToRadianstConst;
 				pointx = earthRadius * Estimator::CosineInCluj(pointLat) * Estimator::CosineInCluj(pointLon);
@@ -120,7 +130,7 @@ namespace MissionControl {
 		case 1:
 			if (currentLon < points[2].GetLongitude())
 			{
-				//we go east to point 2
+				// we go east to point 2
 				pointLat = points[2].GetLatitude() * DegreesToRadianstConst;
 				pointLon = points[2].GetLongitude() * DegreesToRadianstConst;
 				pointx = earthRadius * Estimator::CosineInCluj(pointLat) * Estimator::CosineInCluj(pointLon);
@@ -128,12 +138,12 @@ namespace MissionControl {
 				pointz = earthRadius * Estimator::SineInCluj(pointLon);
 				result[0] = pointz - z;
 				result[1] = pointx - x;
-				
 			}
-			else {
-				//we got over the point
+			else
+			{
+				// we got over the point
 				currentPosition = 2;
-				//we go south to point 3
+				// we go south to point 3
 				pointLat = points[3].GetLatitude() * DegreesToRadianstConst;
 				pointLon = points[3].GetLongitude() * DegreesToRadianstConst;
 				pointx = earthRadius * Estimator::CosineInCluj(pointLat) * Estimator::CosineInCluj(pointLon);
@@ -146,7 +156,7 @@ namespace MissionControl {
 		case 2:
 			if (currentLat > points[3].GetLatitude())
 			{
-				//we go south to point 3
+				// we go south to point 3
 				pointLat = points[3].GetLatitude() * DegreesToRadianstConst;
 				pointLon = points[3].GetLongitude() * DegreesToRadianstConst;
 				pointx = earthRadius * Estimator::CosineInCluj(pointLat) * Estimator::CosineInCluj(pointLon);
@@ -154,12 +164,12 @@ namespace MissionControl {
 				pointz = earthRadius * Estimator::SineInCluj(pointLon);
 				result[0] = pointz - z;
 				result[1] = pointy - y;
-				
 			}
-			else {
-				//we got over the point
+			else
+			{
+				// we got over the point
 				currentPosition = 3;
-				//we go west to point 0
+				// we go west to point 0
 				pointLat = points[0].GetLatitude() * DegreesToRadianstConst;
 				pointLon = points[0].GetLongitude() * DegreesToRadianstConst;
 				pointx = earthRadius * Estimator::CosineInCluj(pointLat) * Estimator::CosineInCluj(pointLon);
@@ -172,7 +182,7 @@ namespace MissionControl {
 		case 3:
 			if (currentLon > points[0].GetLongitude())
 			{
-				//we go west to point 0
+				// we go west to point 0
 				pointLat = points[0].GetLatitude() * DegreesToRadianstConst;
 				pointLon = points[0].GetLongitude() * DegreesToRadianstConst;
 				pointx = earthRadius * Estimator::CosineInCluj(pointLat) * Estimator::CosineInCluj(pointLon);
@@ -180,13 +190,12 @@ namespace MissionControl {
 				pointz = earthRadius * Estimator::SineInCluj(pointLon);
 				result[0] = pointz - z;
 				result[1] = pointx - x;
-				
-
 			}
-			else {
-				//we got over the point
+			else
+			{
+				// we got over the point
 				currentPosition = 0;
-				//we go north to point 1
+				// we go north to point 1
 				pointLat = points[1].GetLatitude() * DegreesToRadianstConst;
 				pointLon = points[1].GetLongitude() * DegreesToRadianstConst;
 				pointx = earthRadius * Estimator::CosineInCluj(pointLat) * Estimator::CosineInCluj(pointLon);

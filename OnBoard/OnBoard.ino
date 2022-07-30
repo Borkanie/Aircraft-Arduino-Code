@@ -11,17 +11,15 @@ uint32_t elevatorPin2 = 4;
 uint32_t rudderPin = 5;
 uint32_t aileronLeftPin = 6;
 uint32_t aileronRightPin = 7;
-bool simpleMission=true;
-Controller controller = Controller(motorPin, elevatorPin1,elevatorPin2, rudderPin, aileronLeftPin, aileronRightPin);
+bool simpleMission = true;
+Controller controller = Controller(motorPin, elevatorPin1, elevatorPin2, rudderPin, aileronLeftPin, aileronRightPin);
 void setup()
 {
-  controller.SimpleMission=simpleMission;
+  controller.SimpleMission = simpleMission;
   controller.Setup(true);
-
 }
 void loop()
 {
   controller.ReadDataFromSensors();
-  controller.InterpretComand(); 
- 
+  controller.InterpretComand();
 }

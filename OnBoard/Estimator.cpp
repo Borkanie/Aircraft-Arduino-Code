@@ -1,13 +1,12 @@
 #include "Estimator.h"
 #include "Arduino.h"
-//#include <iostream>
 
 namespace Estimator
 {
-	float** dynamicAlocation(int n, int m)
+	float **dynamicAlocation(int n, int m)
 	{
-		float** result;
-		result = new float* [n];
+		float **result;
+		result = new float *[n];
 
 		for (int i = 0; i < n; i++)
 		{
@@ -16,7 +15,7 @@ namespace Estimator
 		return result;
 	}
 
-	void deallocateMemo(float** result, int n, int m)
+	void deallocateMemo(float **result, int n, int m)
 	{
 		for (int i = 0; i < n; i++)
 		{
@@ -46,14 +45,14 @@ namespace Estimator
 	}*/
 
 	float SineInCluj(float angleInRadians)
-    {
-        return -0.7288 * angleInRadians * DegreesToRadianstConst + 1.28;
-    }
+	{
+		return -0.7288 * angleInRadians * DegreesToRadianstConst + 1.28;
+	}
 
-    float CosineInCluj(float angleInRadians)
-    {
-        return 0.6847 * angleInRadians * DegreesToRadianstConst + 0.1697;
-    }
+	float CosineInCluj(float angleInRadians)
+	{
+		return 0.6847 * angleInRadians * DegreesToRadianstConst + 0.1697;
+	}
 #pragma region PIDz
 	PIDz::PIDz()
 	{
@@ -93,7 +92,8 @@ namespace Estimator
 		lastError = currentError;
 		currentError = readValue;
 	}
-	float PIDz::GetCommand() {
+	float PIDz::GetCommand()
+	{
 		float command = currentError * Kp;
 		if (Ki != 0 && currentError != 0)
 		{
@@ -101,7 +101,8 @@ namespace Estimator
 			{
 				command += 10 * command;
 			}
-			else {
+			else
+			{
 				command += Ki * Ts * currentError / (currentError - lastError);
 			}
 		}
@@ -112,13 +113,15 @@ namespace Estimator
 			{
 				command += 10 * command;
 			}
-			else {
+			else
+			{
 				command += (Kd * N * (currentError - lastError)) / numitor;
 			}
 		}
 		return command;
 	}
-	PIDz& PIDz::operator=(const PIDz& other) {
+	PIDz &PIDz::operator=(const PIDz &other)
+	{
 		currentError = other.currentError;
 		Kp = other.Kp;
 		Ki = other.Ki;
@@ -131,42 +134,50 @@ namespace Estimator
 #pragma endregion
 
 #pragma region Integrator
-	Integrator::Integrator() {
+	Integrator::Integrator()
+	{
 		SamplingTime = 0;
-		evaluatedValue=Matrix(1,1);
-		evaluatedValue.matrix[0][0]=0;
+		evaluatedValue = Matrix(1, 1);
+		evaluatedValue.matrix[0][0] = 0;
 	}
-	Integrator::Integrator(Matrix matrix, float samplingTime) {
+	Integrator::Integrator(Matrix matrix, float samplingTime)
+	{
 		evaluatedValue = matrix;
 		SamplingTime = samplingTime;
 	}
-	Integrator::Integrator(int n, int m, float samplingTime) {
+	Integrator::Integrator(int n, int m, float samplingTime)
+	{
 		evaluatedValue = Matrix(n, m);
 		SamplingTime = samplingTime;
 	}
-	void Integrator::ReadData(Matrix data) {
+	void Integrator::ReadData(Matrix data)
+	{
 		evaluatedValue = evaluatedValue + data * SamplingTime;
 	}
-	Integrator::~Integrator() {
+	Integrator::~Integrator()
+	{
 		evaluatedValue.~Matrix();
 	}
-	Matrix Integrator::GetValue() {
+	Matrix Integrator::GetValue()
+	{
 		return evaluatedValue;
 	}
-	Integrator& Integrator::operator=(const Integrator& other) {
+	Integrator &Integrator::operator=(const Integrator &other)
+	{
 		this->evaluatedValue = other.evaluatedValue;
 		return *this;
 	}
 #pragma endregion
 #pragma region IntegrationSystem
-	IntegrationSystem::IntegrationSystem(const Matrix translation, const Matrix rotation) {
+	IntegrationSystem::IntegrationSystem(const Matrix translation, const Matrix rotation)
+	{
 		translationalVelocities = Integrator(translation, 0.1);
 		const float FSFControllerFix[5][12]{
 			{0.9884, -0.0629, -0.2409, 0.0364, -1.4949, 0.7359, 0.2943, -3.4698, 0.7385, -0.9884, 0.0629, 0.2409},
 			{0.0687, -0.0010, -0.0350, 0.0236, -1.2925, 0.1366, 0.0181, -1.4199, 0.1369, -0.0687, 0.0010, 0.0350},
 			{-0.0008, 0.0501, 0.0001, -0.4123, 0.0053, -3.1612, -1.0159, 0.0104, -1.4229, 0.0008, -0.0501, -0.0001},
 			{0.0065, -0.0297, -0.0078, 1.4937, -0.0358, 1.2694, 1.2559, -0.0489, 0.3442, -0.0065, 0.0297, 0.0078},
-			{0.0058, 0.0323, -0.0076, -1.4853, -0.0291, -1.2804, -1.2620, -0.0377, -0.3510, -0.0058, -0.0323, 0.0076} };
+			{0.0058, 0.0323, -0.0076, -1.4853, -0.0291, -1.2804, -1.2620, -0.0377, -0.3510, -0.0058, -0.0323, 0.0076}};
 
 		for (int i = 0; i < 5; i++)
 		{
@@ -177,15 +188,17 @@ namespace Estimator
 		}
 	}
 
-	IntegrationSystem::~IntegrationSystem() {
+	IntegrationSystem::~IntegrationSystem()
+	{
 	}
-	IntegrationSystem& IntegrationSystem::operator = (const IntegrationSystem& other)
+	IntegrationSystem &IntegrationSystem::operator=(const IntegrationSystem &other)
 	{
 		this->translationalVelocities = other.translationalVelocities;
 		this->rotationalVelocities = other.rotationalVelocities;
 		return *this;
 	}
-	void IntegrationSystem::ReadTranslationalVelocities(const float accel[3]) {
+	void IntegrationSystem::ReadTranslationalVelocities(const float accel[3])
+	{
 		Matrix data(3, 1);
 		for (int i = 0; i < 3; i++)
 		{
@@ -193,7 +206,8 @@ namespace Estimator
 		}
 		translationalVelocities.ReadData(data);
 	}
-	void IntegrationSystem::ReadRoationalVelocities(const float accel[3]) {
+	void IntegrationSystem::ReadRoationalVelocities(const float accel[3])
+	{
 		Matrix data(3, 1);
 		for (int i = 0; i < 3; i++)
 		{
@@ -204,13 +218,15 @@ namespace Estimator
 
 #pragma endregion
 #pragma region Matrix
-	Matrix::Matrix() {
+	Matrix::Matrix()
+	{
 		this->rows = 1;
 		this->columns = 1;
 		this->matrix = dynamicAlocation(1, 1);
 	}
 
-	Matrix::Matrix(int n, int m) {
+	Matrix::Matrix(int n, int m)
+	{
 		this->rows = n;
 		this->columns = m;
 		this->matrix = dynamicAlocation(n, m);
@@ -223,7 +239,8 @@ namespace Estimator
 		}
 	}
 
-	Matrix::Matrix(const Matrix& other) {
+	Matrix::Matrix(const Matrix &other)
+	{
 		this->matrix = dynamicAlocation(other.rows, other.columns);
 		this->rows = other.rows;
 		this->columns = other.columns;
@@ -236,11 +253,13 @@ namespace Estimator
 		}
 	}
 
-	Matrix::~Matrix() {
+	Matrix::~Matrix()
+	{
 		deallocateMemo(this->matrix, this->rows, this->columns);
 	}
 
-	Matrix Matrix::Transpose() {
+	Matrix Matrix::Transpose()
+	{
 		Matrix result(this->columns, this->rows);
 		for (int i = 0; i < rows; i++)
 		{
@@ -252,14 +271,16 @@ namespace Estimator
 		return result;
 	}
 
-	Matrix::Matrix(const Matrix& other, int startingRow, int endingRow, int startingColumn, int endingColumn) {
+	Matrix::Matrix(const Matrix &other, int startingRow, int endingRow, int startingColumn, int endingColumn)
+	{
 		this->matrix = dynamicAlocation(endingRow - startingRow, endingColumn - startingColumn);
 		this->rows = endingRow - startingRow;
 		this->columns = endingColumn - startingColumn;
 		Attribute(other.matrix, startingRow, endingRow, startingColumn, endingColumn);
 	}
 
-	void Matrix::Attribute(float** sourceMatrix, int startingRow, int endingRow, int startingColumn, int endingColumn) {
+	void Matrix::Attribute(float **sourceMatrix, int startingRow, int endingRow, int startingColumn, int endingColumn)
+	{
 		for (int i = 0; (i < rows) && (i + startingRow < endingRow); i++)
 		{
 			for (int j = 0; (j < columns) && (j + startingColumn < endingColumn); j++)
@@ -321,7 +342,8 @@ namespace Estimator
 		return result;
 	}
 
-	Matrix Matrix::Inverse() {
+	Matrix Matrix::Inverse()
+	{
 		Matrix result(this->columns, this->rows);
 		float det;
 		if (this->columns == this->rows)
@@ -368,7 +390,8 @@ namespace Estimator
 		return result;
 	}
 
-	float Matrix::Determinant() {
+	float Matrix::Determinant()
+	{
 		float result = 1;
 
 		if (this->columns == this->rows)
@@ -376,12 +399,7 @@ namespace Estimator
 			switch (this->columns)
 			{
 			case 3:
-				return matrix[0][0] * matrix[1][1] * matrix[2][2]
-					+ matrix[1][0] * matrix[2][1] * matrix[0][2]
-					+ matrix[0][1] * matrix[1][2] * matrix[2][0]
-					- matrix[2][0] * matrix[1][1] * matrix[0][2]
-					- matrix[2][1] * matrix[1][2] * matrix[0][0]
-					- matrix[1][0] * matrix[0][1] * matrix[2][2];
+				return matrix[0][0] * matrix[1][1] * matrix[2][2] + matrix[1][0] * matrix[2][1] * matrix[0][2] + matrix[0][1] * matrix[1][2] * matrix[2][0] - matrix[2][0] * matrix[1][1] * matrix[0][2] - matrix[2][1] * matrix[1][2] * matrix[0][0] - matrix[1][0] * matrix[0][1] * matrix[2][2];
 			case 2:
 				return matrix[0][0] * matrix[1][1] - matrix[1][0] * matrix[0][1];
 			case 1:
@@ -394,7 +412,7 @@ namespace Estimator
 		return result;
 	}
 
-	Matrix& Matrix::operator = (const Matrix& other)
+	Matrix &Matrix::operator=(const Matrix &other)
 	{
 		deallocateMemo(matrix, rows, columns);
 		this->rows = other.rows;
@@ -410,7 +428,8 @@ namespace Estimator
 		return *this;
 	}
 
-	Matrix Matrix::operator +(Matrix const& obj) {
+	Matrix Matrix::operator+(Matrix const &obj)
+	{
 		Matrix result(this->rows, obj.columns);
 		for (int i = 0; i < this->rows; i++)
 		{
@@ -422,7 +441,8 @@ namespace Estimator
 		return result;
 	}
 
-	Matrix Matrix::operator -(Matrix const& obj) {
+	Matrix Matrix::operator-(Matrix const &obj)
+	{
 		Matrix result(this->rows, this->columns);
 		for (int i = 0; i < this->rows; i++)
 		{
@@ -434,7 +454,8 @@ namespace Estimator
 		return result;
 	}
 
-	Matrix Matrix::operator *(Matrix const& obj) {
+	Matrix Matrix::operator*(Matrix const &obj)
+	{
 		Matrix result(this->rows, obj.columns);
 		for (int i = 0; i < this->rows; i++)
 		{
@@ -450,7 +471,8 @@ namespace Estimator
 		return result;
 	}
 
-	Matrix Matrix::operator *(float const& scalar) {
+	Matrix Matrix::operator*(float const &scalar)
+	{
 		Matrix result(rows, columns);
 		for (int i = 0; i < rows; i++)
 		{
@@ -494,41 +516,41 @@ namespace Estimator
 	void FixedSizeSystem::DoKalmanAlgorithm(Matrix readings)
 	{
 		Xpred = AE * DeltaStates - BE * DeltaInputs;
-		//std::cout << "Xpred= " << Xpred << std::endl;
-		// A*p*A'+Q
+		// std::cout << "Xpred= " << Xpred << std::endl;
+		//  A*p*A'+Q
 		Ppred = AE * P * AE.Transpose() + Q;
 
-		//std::cout << "AE= " << AE << std::endl;
-		//std::cout << "Ppred= " << Ppred << std::endl;
-		//Matrix temp = (CE * Ppred * CE.Transpose() + R);
-		//KalmanGain = Ppred * CE.Transpose() * temp.Inverse();
-		//std::cout << "KalmanGain= " << KalmanGain << std::endl;
-		//std::cout << "CE * Ppred * CE.Transpose() + R= " << temp << std::endl;
+		// std::cout << "AE= " << AE << std::endl;
+		// std::cout << "Ppred= " << Ppred << std::endl;
+		// Matrix temp = (CE * Ppred * CE.Transpose() + R);
+		// KalmanGain = Ppred * CE.Transpose() * temp.Inverse();
+		// std::cout << "KalmanGain= " << KalmanGain << std::endl;
+		// std::cout << "CE * Ppred * CE.Transpose() + R= " << temp << std::endl;
 		/*
 		Serial.print("(readings - States) :");
 		Matrix error=(readings - States);
-        Serial.print( error.matrix[0][0]);
-        Serial.print(",");
-        Serial.print( error.matrix[1][0]);
-        Serial.print(",");
+		Serial.print( error.matrix[0][0]);
+		Serial.print(",");
+		Serial.print( error.matrix[1][0]);
+		Serial.print(",");
 		 Serial.print( error.matrix[2][0]);
-        Serial.print(",");
+		Serial.print(",");
 		 Serial.print( error.matrix[3][0]);
-        Serial.print(",");
+		Serial.print(",");
 		 Serial.print( error.matrix[4][0]);
-        Serial.print(",");
+		Serial.print(",");
 		 Serial.print( error.matrix[5][0]);
-        Serial.print(",");
+		Serial.print(",");
 		 Serial.print( error.matrix[6][0]);
-        Serial.print(",");
+		Serial.print(",");
 		 Serial.print( error.matrix[7][0]);
-        Serial.print(",");
+		Serial.print(",");
 		 Serial.println( error.matrix[8][0]);*/
-		//std::cout << "(readings - States)  " << (readings - States)  << std::endl;
+		// std::cout << "(readings - States)  " << (readings - States)  << std::endl;
 		DeltaStates = Xpred + KalmanGain * ((readings - States) - CE * Xpred);
-		//std::cout << "DeltaStates= " << DeltaStates << std::endl;
+		// std::cout << "DeltaStates= " << DeltaStates << std::endl;
 		P = (I12 - KalmanGain * CE) * Ppred * (I12 - KalmanGain * CE).Transpose() + KalmanGain * R * KalmanGain.Transpose();
-		//std::cout << "P= " << P << std::endl;
+		// std::cout << "P= " << P << std::endl;
 		DeltaInputs = FSFController * DeltaStates;
 	}
 
@@ -540,19 +562,18 @@ namespace Estimator
 	void FixedSizeSystem::InitConstants()
 	{
 		const float Kalman[12][9] = {
-			{0.7631, -0.0043,    0.0090,    0.0010, -0.0193,    0.0043, -0.0007, -0.0608,    0.0065},
-			{-0.0043,    0.8089,    0.0005,    0.0256, -0.0005, -0.0525, -0.0406, -0.0011, -0.0544},
-			{0.0090,    0.0005,    0.8792, -0.0021,    0.0278, -0.0001,    0.0001,    0.0334, -0.0006},
-			{0.0010,    0.0256, -0.0021,    0.6214,    0.0007,    0.0105,    0.0183,    0.0010,    0.0108},
-			{-0.0193, -0.0005,    0.0278,    0.0007,    0.6088,    0.0004, -0.0001, -0.0035,    0.0007},
-			{0.0043, -0.0525, -0.0001,    0.0105,    0.0004,    0.6011, -0.0118,    0.0013, -0.0072},
-			{-0.0007, -0.0406,    0.0001,    0.0183, -0.0001, -0.0118,    0.6091, -0.0002, -0.0136},
-			{-0.0608, -0.0011,    0.0334,    0.0010, -0.0035,    0.0013, -0.0002,    0.5910,    0.0021},
-			{0.0065, -0.0544, -0.0006,    0.0108,    0.0007, -0.0072, -0.0136,    0.0021,    0.6002},
-			{1.0691,    0.0063, -0.1243, -0.0544,    0.1650, -0.0372, -0.0006,    0.4899, -0.0555},
-			{0.0337,    0.8834,    0.0056,    0.3923,    0.0018,    0.4236,    0.3036,    0.0098,    0.4210},
-			{0.1341, -0.0128,    0.7603,    0.0166, -0.2574, -0.0106, -0.0038, -0.2785, -0.0084}
-		};
+			{0.7631, -0.0043, 0.0090, 0.0010, -0.0193, 0.0043, -0.0007, -0.0608, 0.0065},
+			{-0.0043, 0.8089, 0.0005, 0.0256, -0.0005, -0.0525, -0.0406, -0.0011, -0.0544},
+			{0.0090, 0.0005, 0.8792, -0.0021, 0.0278, -0.0001, 0.0001, 0.0334, -0.0006},
+			{0.0010, 0.0256, -0.0021, 0.6214, 0.0007, 0.0105, 0.0183, 0.0010, 0.0108},
+			{-0.0193, -0.0005, 0.0278, 0.0007, 0.6088, 0.0004, -0.0001, -0.0035, 0.0007},
+			{0.0043, -0.0525, -0.0001, 0.0105, 0.0004, 0.6011, -0.0118, 0.0013, -0.0072},
+			{-0.0007, -0.0406, 0.0001, 0.0183, -0.0001, -0.0118, 0.6091, -0.0002, -0.0136},
+			{-0.0608, -0.0011, 0.0334, 0.0010, -0.0035, 0.0013, -0.0002, 0.5910, 0.0021},
+			{0.0065, -0.0544, -0.0006, 0.0108, 0.0007, -0.0072, -0.0136, 0.0021, 0.6002},
+			{1.0691, 0.0063, -0.1243, -0.0544, 0.1650, -0.0372, -0.0006, 0.4899, -0.0555},
+			{0.0337, 0.8834, 0.0056, 0.3923, 0.0018, 0.4236, 0.3036, 0.0098, 0.4210},
+			{0.1341, -0.0128, 0.7603, 0.0166, -0.2574, -0.0106, -0.0038, -0.2785, -0.0084}};
 
 		for (int i = 0; i < 12; i++)
 		{
@@ -572,25 +593,25 @@ namespace Estimator
 			this->DeltaStates.matrix[i][0] = 0;
 		}
 
-		const float InputsFix[5] = { 5.5, 0, 0, 0, 0 };
+		const float InputsFix[5] = {5.5, 0, 0, 0, 0};
 
 		for (int i = 0; i < 5; i++)
 		{
 			this->Inputs.matrix[0][i] = InputsFix[i];
 		}
 		const float I[12][12] =
-		{ {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-			{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-			{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0},
-			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0},
-			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1} };
+			{{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			 {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			 {0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			 {0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0},
+			 {0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0},
+			 {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0},
+			 {0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0},
+			 {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0},
+			 {0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0},
+			 {0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0},
+			 {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0},
+			 {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}};
 
 		for (int i = 0; i < 12; i++)
 		{
@@ -620,7 +641,7 @@ namespace Estimator
 			{0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0},
 			{0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0},
 			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0},
-			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1} };
+			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}};
 
 		for (int i = 0; i < 12; i++)
 		{
@@ -630,7 +651,7 @@ namespace Estimator
 			}
 		}
 
-		const float StatesFix[9] = { 11.8, 0, 1.8, 0, 0, 0, 0, 0.1, 0 };
+		const float StatesFix[9] = {11.8, 0, 1.8, 0, 0, 0, 0, 0.1, 0};
 
 		for (int i = 0; i < 9; i++)
 		{
@@ -646,8 +667,7 @@ namespace Estimator
 			{0, 0, 0, 0, 0, 1, 0, 0, 0},
 			{0, 0, 0, 0, 0, 0, 1, 0, 0},
 			{0, 0, 0, 0, 0, 0, 0, 1, 0},
-			{0, 0, 0, 0, 0, 0, 0, 0, 1}
-		};
+			{0, 0, 0, 0, 0, 0, 0, 0, 1}};
 
 		for (int i = 0; i < 9; i++)
 		{
@@ -669,7 +689,7 @@ namespace Estimator
 			{0, 0, 0, 0, 0, 0.1005, 0, 0, 1.0000, 0, 0, 0},
 			{0, 0, 0, 0, 0, 0, 0, 0, 0, 1.0000, 0, 0},
 			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.0000, 0},
-			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.0000} };
+			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.0000}};
 
 		for (int i = 0; i < 12; i++)
 		{
@@ -691,7 +711,7 @@ namespace Estimator
 			{0, 0, 0, 0, 0},
 			{0, 0, 0, 0, 0},
 			{0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0} };
+			{0, 0, 0, 0, 0}};
 
 		for (int i = 0; i < 12; i++)
 		{
@@ -710,7 +730,7 @@ namespace Estimator
 			{0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0},
 			{0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0},
 			{0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0} };
+			{0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0}};
 
 		for (int i = 0; i < 9; i++)
 		{
@@ -726,7 +746,7 @@ namespace Estimator
 			{0.0687, -0.0010, -0.0350, 0.0236, -1.2925, 0.1366, 0.0181, -1.4199, 0.1369, -0.0687, 0.0010, 0.0350},
 			{-0.0008, 0.0501, 0.0001, -0.4123, 0.0053, -3.1612, -1.0159, 0.0104, -1.4229, 0.0008, -0.0501, -0.0001},
 			{0.0065, -0.0297, -0.0078, 1.4937, -0.0358, 1.2694, 1.2559, -0.0489, 0.3442, -0.0065, 0.0297, 0.0078},
-			{0.0058, 0.0323, -0.0076, -1.4853, -0.0291, -1.2804, -1.2620, -0.0377, -0.3510, -0.0058, -0.0323, 0.0076} };
+			{0.0058, 0.0323, -0.0076, -1.4853, -0.0291, -1.2804, -1.2620, -0.0377, -0.3510, -0.0058, -0.0323, 0.0076}};
 
 		for (int i = 0; i < 5; i++)
 		{
@@ -751,20 +771,20 @@ namespace Estimator
 	void DynamicAllocationSystem::CalculatePpred()
 	{
 		// A*P
-		float** result = Multiply(this->AE, 12, 12, this->P, 12, 12);
+		float **result = Multiply(this->AE, 12, 12, this->P, 12, 12);
 
 		// A'
-		float** AETranspose = Transpose(this->AE, 12, 12);
+		float **AETranspose = Transpose(this->AE, 12, 12);
 
 		// A*P*A'
-		float** result2 = Multiply(result, 12, 12, AETranspose, 12, 12);
+		float **result2 = Multiply(result, 12, 12, AETranspose, 12, 12);
 
 		// Delete old pred matrix
 		deallocateMemo(this->Ppred, 12, 12);
 		// A*p*A'+Q
 		this->Ppred = Add(result2, 12, 12, this->Q, 12, 12);
 
-		//free up memory
+		// free up memory
 		deallocateMemo(result2, 12, 12);
 		deallocateMemo(AETranspose, 12, 12);
 		deallocateMemo(result, 12, 12);
@@ -773,27 +793,27 @@ namespace Estimator
 	void DynamicAllocationSystem::CalculateNewGain()
 	{
 		// size(9,12).
-		float** resultM1 = Multiply(this->CE, 9, 12, this->Ppred, 12, 12);
+		float **resultM1 = Multiply(this->CE, 9, 12, this->Ppred, 12, 12);
 
 		// size(12,9).
-		float** CET = Transpose(this->CE, 9, 12);
+		float **CET = Transpose(this->CE, 9, 12);
 
 		// size(9,9)
-		float** resultM2 = Multiply(resultM1, 9, 12, CET, 12, 9);
+		float **resultM2 = Multiply(resultM1, 9, 12, CET, 12, 9);
 
 		// size(9,9)
-		float** resultM3 = Add(resultM2, 9, 9, this->R, 9, 9);
+		float **resultM3 = Add(resultM2, 9, 9, this->R, 9, 9);
 
 		deallocateMemo(resultM2, 9, 9);
 		resultM2 = inverse(resultM3, 9, 9);
 
 		// size(12,9).
-		float** resultM4 = Multiply(this->Ppred, 12, 12, CET, 12, 9);
+		float **resultM4 = Multiply(this->Ppred, 12, 12, CET, 12, 9);
 
 		deallocateMemo(this->KalmanGain, 12, 9);
 		this->KalmanGain = Multiply(resultM4, 12, 9, resultM2, 9, 9);
 
-		//Clean up
+		// Clean up
 		deallocateMemo(resultM2, 9, 9);
 		deallocateMemo(CET, 12, 9);
 		deallocateMemo(resultM4, 12, 9);
@@ -802,21 +822,21 @@ namespace Estimator
 	}
 	void DynamicAllocationSystem::Estimate(float readings[9])
 	{
-		//size(9,1)
-		float** result1 = dynamicAlocation(9, 1);
+		// size(9,1)
+		float **result1 = dynamicAlocation(9, 1);
 		for (int i = 0; i < 9; i++)
 		{
 			result1[i][0] = (readings[i] - this->States[i][0]);
 		}
 
-		//size(9,1)
-		float** result2 = Multiply(this->CE, 9, 12, this->Xpred, 12, 1);
+		// size(9,1)
+		float **result2 = Multiply(this->CE, 9, 12, this->Xpred, 12, 1);
 
-		//size(9,1)
-		float** paranthesis = Substract(result1, 9, 1, result2, 9, 1);
+		// size(9,1)
+		float **paranthesis = Substract(result1, 9, 1, result2, 9, 1);
 
-		//size(12,1)
-		float** correction = Multiply(this->KalmanGain, 12, 9, paranthesis, 9, 1);
+		// size(12,1)
+		float **correction = Multiply(this->KalmanGain, 12, 9, paranthesis, 9, 1);
 
 		deallocateMemo(this->DeltaStates, 12, 1);
 		this->DeltaStates = Add(this->Xpred, 12, 1, correction, 12, 1);
@@ -830,25 +850,25 @@ namespace Estimator
 	{
 		// K*R
 		// size(12,9)
-		float** result1 = Multiply(this->KalmanGain, 12, 9, this->R, 9, 9);
+		float **result1 = Multiply(this->KalmanGain, 12, 9, this->R, 9, 9);
 		// K.' size(9,12)
-		float** kalmanTranspose = Transpose(this->KalmanGain, 12, 9);
+		float **kalmanTranspose = Transpose(this->KalmanGain, 12, 9);
 		// K*R*K'
 		// K.' size(12,12)
-		float** secondValue = Multiply(this->KalmanGain, 12, 9, kalmanTranspose, 9, 12);
+		float **secondValue = Multiply(this->KalmanGain, 12, 9, kalmanTranspose, 9, 12);
 
-		//size(12,12)
-		float** KnCd = Multiply(this->KalmanGain, 12, 9, this->CE, 9, 12);
+		// size(12,12)
+		float **KnCd = Multiply(this->KalmanGain, 12, 9, this->CE, 9, 12);
 		//(eye(12)-Kn*Cd)
-		//size(12,12)
-		float** paranthesizTerms = Substract(I12, 12, 12, KnCd, 12, 12);
-		//size(12,12)
-		float** paranthesizTermsTranspose = Transpose(paranthesizTerms, 12, 12);
-		//size(12,12)
+		// size(12,12)
+		float **paranthesizTerms = Substract(I12, 12, 12, KnCd, 12, 12);
+		// size(12,12)
+		float **paranthesizTermsTranspose = Transpose(paranthesizTerms, 12, 12);
+		// size(12,12)
 		//(eye(12)-Kn*Cd)*Ppred
-		float** tempValue = Multiply(paranthesizTerms, 12, 12, this->Ppred, 12, 12);
+		float **tempValue = Multiply(paranthesizTerms, 12, 12, this->Ppred, 12, 12);
 		//(eye(12)-Kn*Cd)*Ppred*(eye(12)-Kn*Cd).'
-		float** firstValue = Multiply(tempValue, 12, 12, paranthesizTermsTranspose, 12, 12);
+		float **firstValue = Multiply(tempValue, 12, 12, paranthesizTermsTranspose, 12, 12);
 
 		// Update value in object
 		deallocateMemo(this->P, 12, 12);
@@ -866,15 +886,16 @@ namespace Estimator
 	void DynamicAllocationSystem::Predict()
 	{
 		deallocateMemo(this->Xpred, 12, 1);
-		float** matrix1 = Multiply(this->AE, 12, 12, this->DeltaStates, 12, 1);
-		float** matrix2 = Multiply(this->BE, 12, 5, this->DeltaInputs, 5, 1);
+		float **matrix1 = Multiply(this->AE, 12, 12, this->DeltaStates, 12, 1);
+		float **matrix2 = Multiply(this->BE, 12, 5, this->DeltaInputs, 5, 1);
 		this->Xpred = Add(matrix1, 12, 1, matrix2, 12, 1);
 		deallocateMemo(matrix1, 12, 1);
 		deallocateMemo(matrix2, 12, 1);
 	}
 
-	float** DynamicAllocationSystem::Transpose(float** A, int n1, int m1) {
-		float** result = dynamicAlocation(m1, n1);
+	float **DynamicAllocationSystem::Transpose(float **A, int n1, int m1)
+	{
+		float **result = dynamicAlocation(m1, n1);
 		for (int i = 0; i < n1; i++)
 		{
 			for (int j = 0; j < m1; j++)
@@ -885,10 +906,10 @@ namespace Estimator
 		return result;
 	}
 
-	float** DynamicAllocationSystem::Multiply(float** matrix1, int n1, int m1, float** matrix2, int n2, int m2)
+	float **DynamicAllocationSystem::Multiply(float **matrix1, int n1, int m1, float **matrix2, int n2, int m2)
 	{
 		m1 == n2;
-		float** result = dynamicAlocation(n1, m2);
+		float **result = dynamicAlocation(n1, m2);
 		for (int i = 0; i < n1; i++)
 		{
 			for (int j = 0; j < m2; j++)
@@ -903,10 +924,10 @@ namespace Estimator
 		return result;
 	}
 
-	float** DynamicAllocationSystem::Add(float** matrix1, int n1, int m1, float** matrix2, int n2, int m2)
+	float **DynamicAllocationSystem::Add(float **matrix1, int n1, int m1, float **matrix2, int n2, int m2)
 	{
 		m1 == n2;
-		float** result = dynamicAlocation(n1, m2);
+		float **result = dynamicAlocation(n1, m2);
 		for (int i = 0; i < n1; i++)
 		{
 			for (int j = 0; j < m2; j++)
@@ -917,10 +938,10 @@ namespace Estimator
 		return result;
 	}
 
-	float** DynamicAllocationSystem::Substract(float** matrix1, int n1, int m1, float** matrix2, int n2, int m2)
+	float **DynamicAllocationSystem::Substract(float **matrix1, int n1, int m1, float **matrix2, int n2, int m2)
 	{
 		m1 == n2;
-		float** result = dynamicAlocation(n1, m2);
+		float **result = dynamicAlocation(n1, m2);
 		for (int i = 0; i < n1; i++)
 		{
 			for (int j = 0; j < m2; j++)
@@ -933,10 +954,10 @@ namespace Estimator
 
 	// Function to get cofactor of A[p][q] in temp[][].n is current
 	//  dimension of A[][]
-	float** DynamicAllocationSystem::getCofactor(float** A, int n1, int m1, int p, int q)
+	float **DynamicAllocationSystem::getCofactor(float **A, int n1, int m1, int p, int q)
 	{
 		int i = 0, j = 0;
-		float** temp = dynamicAlocation(n1 - 1, m1 - 1);
+		float **temp = dynamicAlocation(n1 - 1, m1 - 1);
 		// Looping for each element of the matrix
 		for (int row = 0; row < n1; row++)
 		{
@@ -963,7 +984,7 @@ namespace Estimator
 
 	/* Recursive function for finding determinant of matrix.
 	   n is current dimension of A[][]. */
-	float DynamicAllocationSystem::determinant(float** A, int n1, int m1)
+	float DynamicAllocationSystem::determinant(float **A, int n1, int m1)
 	{
 		float D = 0; // Initialize result
 
@@ -977,7 +998,7 @@ namespace Estimator
 		for (int f = 0; f < m1; f++)
 		{
 			// Getting Cofactor of A[0][f]
-			float** temp = getCofactor(A, n1, m1, 0, f);
+			float **temp = getCofactor(A, n1, m1, 0, f);
 			D += sign * A[0][f] * determinant(temp, n1 - 1, m1 - 1);
 			deallocateMemo(temp, n1 - 1, m1 - 1);
 			// terms are to be added with alternate sign
@@ -988,9 +1009,9 @@ namespace Estimator
 	}
 
 	// Function to get adjoint of A[N][N] in adj[N][N].
-	float** DynamicAllocationSystem::adjoint(float** A, int n1, int m1)
+	float **DynamicAllocationSystem::adjoint(float **A, int n1, int m1)
 	{
-		float** temp = dynamicAlocation(n1, m1);
+		float **temp = dynamicAlocation(n1, m1);
 		if (n1 == 1)
 		{
 			temp[0][0] = 1;
@@ -1006,7 +1027,7 @@ namespace Estimator
 			for (int j = 0; j < m1; j++)
 			{
 				// Get cofactor of A[i][j]
-				float** temp2 = getCofactor(A, n1, m1, i, j);
+				float **temp2 = getCofactor(A, n1, m1, i, j);
 
 				// sign of adj[j][i] positive if sum of row
 				// and column indexes is even.
@@ -1023,13 +1044,13 @@ namespace Estimator
 
 	// Function to calculate and store inverse, returns false if
 	// matrix is singular
-	float** DynamicAllocationSystem::inverse(float** A, int n1, int m1)
+	float **DynamicAllocationSystem::inverse(float **A, int n1, int m1)
 	{
 		// Find determinant of A[][]
 		float det = determinant(A, n1, m1);
 
 		// Find adjoint
-		float** adj = adjoint(A, 9, 9);
+		float **adj = adjoint(A, 9, 9);
 
 		// Find Inverse using formula "inverse(A) = adj(A)/det(A)"
 		for (int i = 0; i < n1; i++)
@@ -1060,26 +1081,26 @@ namespace Estimator
 		this->Ppred = dynamicAlocation(12, 12);
 		this->KalmanGain = dynamicAlocation(12, 9);
 
-		const float InputsFix[5] = { 5.5, 0, 0, 0, 0 };
+		const float InputsFix[5] = {5.5, 0, 0, 0, 0};
 		this->Inputs = dynamicAlocation(1, 5);
 		for (int i = 0; i < 5; i++)
 		{
 			this->Inputs[0][i] = InputsFix[i];
 		}
 		const float I[12][12] =
-		{
-			{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-			{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-			{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0},
-			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0},
-			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1} };
+			{
+				{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+				{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+				{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+				{0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0},
+				{0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0},
+				{0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0},
+				{0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0},
+				{0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0},
+				{0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0},
+				{0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0},
+				{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0},
+				{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}};
 		(this->I12) = dynamicAlocation(12, 12);
 		for (int i = 0; i < 12; i++)
 		{
@@ -1110,7 +1131,7 @@ namespace Estimator
 			{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 			{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 			{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-			{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1} };
+			{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}};
 		(this->Q) = dynamicAlocation(12, 12);
 		for (int i = 0; i < 12; i++)
 		{
@@ -1120,7 +1141,7 @@ namespace Estimator
 			}
 		}
 
-		const float StatesFix[9] = { 11.8, 0, 1.8, 0, 0, 0, 0, 0.1, 0 };
+		const float StatesFix[9] = {11.8, 0, 1.8, 0, 0, 0, 0, 0.1, 0};
 		(this->States) = dynamicAlocation(9, 1);
 		for (int i = 0; i < 9; i++)
 		{
@@ -1136,7 +1157,7 @@ namespace Estimator
 			{3, 3, 3, 3, 3, 3, 3, 3, 3},
 			{3, 3, 3, 3, 3, 3, 3, 3, 3},
 			{3, 3, 3, 3, 3, 3, 3, 3, 3},
-			{3, 3, 3, 3, 3, 3, 3, 3, 3} };
+			{3, 3, 3, 3, 3, 3, 3, 3, 3}};
 		(this->R) = dynamicAlocation(9, 9);
 		for (int i = 0; i < 9; i++)
 		{
@@ -1158,7 +1179,7 @@ namespace Estimator
 			{0, 0, 0, 0, 0, 0.1005, 0, 0, 1.0000, 0, 0, 0},
 			{0, 0, 0, 0, 0, 0, 0, 0, 0, 1.0000, 0, 0},
 			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.0000, 0},
-			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.0000} };
+			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.0000}};
 		(this->AE) = dynamicAlocation(12, 12);
 		for (int i = 0; i < 12; i++)
 		{
@@ -1180,7 +1201,7 @@ namespace Estimator
 			{0, 0, 0, 0, 0},
 			{0, 0, 0, 0, 0},
 			{0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0} };
+			{0, 0, 0, 0, 0}};
 		(this->BE) = dynamicAlocation(12, 5);
 		for (int i = 0; i < 12; i++)
 		{
@@ -1199,7 +1220,7 @@ namespace Estimator
 			{0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0},
 			{0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0},
 			{0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0} };
+			{0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0}};
 		(this->CE) = dynamicAlocation(9, 12);
 		for (int i = 0; i < 9; i++)
 		{
@@ -1215,7 +1236,7 @@ namespace Estimator
 			{0.0687, -0.0010, -0.0350, 0.0236, -1.2925, 0.1366, 0.0181, -1.4199, 0.1369, -0.0687, 0.0010, 0.0350},
 			{-0.0008, 0.0501, 0.0001, -0.4123, 0.0053, -3.1612, -1.0159, 0.0104, -1.4229, 0.0008, -0.0501, -0.0001},
 			{0.0065, -0.0297, -0.0078, 1.4937, -0.0358, 2.2694, 1.2559, -0.0489, 1.1442, -0.0065, 0.0297, 0.0078},
-			{0.0058, 0.0323, -0.0076, -1.4853, -0.0291, -2.2804, -1.2620, -0.0377, -1.1510, -0.0058, -0.0323, 0.0076} };
+			{0.0058, 0.0323, -0.0076, -1.4853, -0.0291, -2.2804, -1.2620, -0.0377, -1.1510, -0.0058, -0.0323, 0.0076}};
 		// Sampling time.
 		(this->FSFController) = dynamicAlocation(5, 12);
 		for (int i = 0; i < 5; i++)

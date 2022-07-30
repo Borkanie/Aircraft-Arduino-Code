@@ -12,18 +12,18 @@
 
 // instantiate an object for the nRF24L01 transceiver
 namespace OnBoard
-{  
+{
     // linearized form of motor:
     // F=ThrustCoeff[0]*PWM+ThrustCoeff[1]
-    const float ThrustCoeff[2]={ 0.0328, -0.0813};
-    // We expect to get the deflection angle of the surfaces in radians. 
+    const float ThrustCoeff[2] = {0.0328, -0.0813};
+    // We expect to get the deflection angle of the surfaces in radians.
     // We convert them to pwm for the servomotor.
-    int GetAngleFromDu(float radians,int offset=0);
-    // We expect to get the deflection angle of the surfaces in radians. 
+    int GetAngleFromDu(float radians, int offset = 0);
+    // We expect to get the deflection angle of the surfaces in radians.
     // We convert them to pwm for the servomotor.
-    int GetAngleFromMessage(int radians,int offset=0);
-    //uint8_t Rad2PWM(float radians, float offset = 0.4668);
-    // Converts thrust from newtons to PWM for motor.
+    int GetAngleFromMessage(int radians, int offset = 0);
+    // uint8_t Rad2PWM(float radians, float offset = 0.4668);
+    //  Converts thrust from newtons to PWM for motor.
     uint8_t ThrustToPwm(float thrust);
     class Controller : OnBoardHelper::AircraftConfiguration
     {
@@ -34,10 +34,10 @@ namespace OnBoard
         Servo Elevator1;
         Servo Elevator2;
         Servo Rudder;
-    //this will gives us the position error to the current mission
+        // this will gives us the position error to the current mission
         MissionControl::SquareMission Mission;
-        //this will flag if we reset mission
-        bool newMission=true;
+        // this will flag if we reset mission
+        bool newMission = true;
         float latitude = 46.786;
         float lon = 23.592;
         float lastRead[3] = {10, 10, 10};
@@ -70,15 +70,14 @@ namespace OnBoard
         bool ReadMPU();
         void ReadGPS();
         void InitializeControllers();
-        Estimator::PIDz OyController;
-        Estimator::PIDz OzController;
+        Estimator::PIDz OyController;        Estimator::PIDz OzController;
         Estimator::Integrator TranslationalVelocities;
         Estimator::Integrator RotationalVelocities;
-    public:
 
+    public:
         Estimator::FixedSizeSystem Kalman;
-        bool SimpleMission=true;
-        Controller(uint32_t motorPin, uint32_t elevatorPin1,uint32_t elevatorPin2, uint32_t rudderPin, uint32_t aileronLeftPin, uint32_t aileronRightPin);
+        bool SimpleMission = true;
+        Controller(uint32_t motorPin, uint32_t elevatorPin1, uint32_t elevatorPin2, uint32_t rudderPin, uint32_t aileronLeftPin, uint32_t aileronRightPin);
         void Setup(bool serial);
         void InterpretComand();
         void ReadDataFromSensors();

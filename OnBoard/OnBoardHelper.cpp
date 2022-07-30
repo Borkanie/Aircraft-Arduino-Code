@@ -28,7 +28,7 @@ namespace OnBoardHelper
         rslt[2][2] = (mat1[2][0] * mat2[0][0] + mat1[2][1] * mat2[1][0] + mat1[2][2] * mat2[2][0]);
     }
 
-    AircraftConfiguration::AircraftConfiguration(uint32_t motorPin,uint32_t elevatorPin1,uint32_t elevatorPin2, uint32_t rudderPin, uint32_t aileronLeftPin, uint32_t aileronRightPin)
+    AircraftConfiguration::AircraftConfiguration(uint32_t motorPin, uint32_t elevatorPin1, uint32_t elevatorPin2, uint32_t rudderPin, uint32_t aileronLeftPin, uint32_t aileronRightPin)
     {
         this->MotorPin = motorPin;
         this->ElevatorPin1 = elevatorPin1;

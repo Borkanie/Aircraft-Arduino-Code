@@ -258,7 +258,7 @@ namespace OnBoard
                 // create new mission
                 if (newMission)
                 {
-                    newMission=false;
+                    newMission = false;
                     if (SimpleMission)
                     {
                         for (int i = 0; i < 5; i++)
@@ -294,7 +294,7 @@ namespace OnBoard
             {
                 radio.flush_rx();
                 ChangeState(OnBoardHelper::NORMAL);
-                newMission=true;
+                newMission = true;
                 // SerialPrintLn("MANUAL");
                 InterpretRadioCommand();
             }
