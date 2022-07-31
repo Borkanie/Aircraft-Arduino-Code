@@ -6,7 +6,8 @@
 #include "SPI.h"
 #include "RF24.h"
 #include <stdint.h>
-#include <string> // std::string, std::to_string
+#include <string> 
+// std::string, std::to_string
 // instantiate an object for the nRF24L01 transceiver
 namespace OnBoard
 {
@@ -75,9 +76,9 @@ namespace OnBoard
             this->mpu.setup(0x68);
         }
 
-        this->newRead[0] = this->mpu.getEulerX();
-        this->newRead[1] = this->mpu.getEulerY();
-        this->newRead[2] = this->mpu.getEulerZ();
+        this->newTranslationalRead[0] = this->mpu.getEulerX();
+        this->newTranslationalRead[1] = this->mpu.getEulerY();
+        this->newTranslationalRead[2] = this->mpu.getEulerZ();
         SerialPrintLn("Waiting for MPU calibration:");
         while (!ReadDifference())
         {
@@ -115,20 +116,20 @@ namespace OnBoard
             rotationalVelocties.matrix[2][0] = mpu.getGyroZ() * PI / 180;
             RotationalVelocities.ReadData(rotationalVelocties);
 
-            this->lastRead[0] = this->newRead[0];
-            this->lastRead[1] = this->newRead[1];
-            this->lastRead[2] = this->newRead[2];
+            this->lastTranslationalRead[0] = this->newTranslationalRead[0];
+            this->lastTranslationalRead[1] = this->newTranslationalRead[1];
+            this->lastTranslationalRead[2] = this->newTranslationalRead[2];
             // WriteCurrentReadings();
-            this->newRead[0] = this->mpu.getEulerX() * PI / 180;
-            this->newRead[1] = this->mpu.getEulerY() * PI / 180;
-            this->newRead[2] = this->mpu.getEulerZ() * PI / 180;
+            this->newTranslationalRead[0] = this->mpu.getEulerX() * PI / 180;
+            this->newTranslationalRead[1] = this->mpu.getEulerY() * PI / 180;
+            this->newTranslationalRead[2] = this->mpu.getEulerZ() * PI / 180;
             return true;
         }
         return false;
     }
     void Controller::CalculateDiff()
     {
-        this->value = (this->lastRead[0] - this->newRead[0]) * (this->lastRead[0] - this->newRead[0]) + (this->lastRead[1] - this->newRead[1]) * (this->lastRead[1] - this->newRead[1]) + (this->lastRead[2] - this->newRead[2]) * (this->lastRead[2] - this->newRead[2]);
+        this->value = (this->lastTranslationalRead[0] - this->newTranslationalRead[0]) * (this->lastTranslationalRead[0] - this->newTranslationalRead[0]) + (this->lastTranslationalRead[1] - this->newTranslationalRead[1]) * (this->lastTranslationalRead[1] - this->newTranslationalRead[1]) + (this->lastTranslationalRead[2] - this->newTranslationalRead[2]) * (this->lastTranslationalRead[2] - this->newTranslationalRead[2]);
     }
     void Controller::InitializeSerial()
     {
@@ -156,11 +157,11 @@ namespace OnBoard
         if (this->PcSerial)
         {
             Serial.print("Current values are:");
-            Serial.print(this->lastRead[0]);
+            Serial.print(this->lastTranslationalRead[0]);
             Serial.print(",");
-            Serial.print(this->lastRead[1]);
+            Serial.print(this->lastTranslationalRead[1]);
             Serial.print(",");
-            Serial.println(this->lastRead[2]);
+            Serial.println(this->lastTranslationalRead[2]);
         }
     }
     bool Controller::ReadRadio()
@@ -239,7 +240,7 @@ namespace OnBoard
             ReadMPU();
             for (int i = 6; i < 9; i++)
             {
-                Kalman.States.matrix[i][0] = newRead[i - 6];
+                Kalman.States.matrix[i][0] = newTranslationalRead[i - 6];
             }
         }
         ChangeState(OnBoardHelper::NORMAL);
@@ -272,13 +273,13 @@ namespace OnBoard
                         ReadMPU();
                         for (int i = 6; i < 9; i++)
                         {
-                            Kalman.States.matrix[i][0] = newRead[i - 6];
+                            Kalman.States.matrix[i][0] = newTranslationalRead[i - 6];
                         }
                         WriteCurrentReadings();
                     }
                     else
                     {
-                        Mission = MissionControl::SquareMission(latitude, lon);
+                        Mission = MissionControl::RectangleMission(latitude, lon);
                     }
                 }
                 Estimator::Matrix control = CalculateControl();
@@ -310,7 +311,7 @@ namespace OnBoard
                 // create new mission
                 if (newMission)
                 {
-                    Mission = MissionControl::SquareMission(latitude, lon);
+                    Mission = MissionControl::RectangleMission(latitude, lon);
                 }
                 Estimator::Matrix control = CalculateControl();
                 // we need some mapping
@@ -369,9 +370,9 @@ namespace OnBoard
         Estimator::Matrix readings(9, 1);
         readings.CopyBloc(TranslationalVelocities.GetValue(), 0, 0);
         readings.CopyBloc(RotationalVelocities.GetValue(), 3, 0);
-        readings.matrix[6][0] = newRead[0];
-        readings.matrix[7][0] = newRead[0];
-        readings.matrix[8][0] = newRead[0];
+        readings.matrix[6][0] = newTranslationalRead[0];
+        readings.matrix[7][0] = newTranslationalRead[0];
+        readings.matrix[8][0] = newTranslationalRead[0];
 
         Kalman.DoKalmanAlgorithm(readings);
     }

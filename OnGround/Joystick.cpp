@@ -6,19 +6,21 @@ namespace Controller
     void ChangeMode()
     {
         controller.ChangeState(Normal);
-        AutonomosMode = !AutonomosMode;
+        Manual = !Manual;
         controller.SerialPrintLn("Changed Mode");
     }
+
     void Controller::ClearRadio()
     {
         this->radio.flush_tx();
     }
+
     void Controller::Setup(bool serial)
     {
         this->PcSerial = serial;
-        ChangeState(Error);
         pinMode(Normal, OUTPUT);
         pinMode(Error, OUTPUT);
+        ChangeState(Error);
         pinMode(Motor, INPUT);
         pinMode(Elevator, INPUT);
         pinMode(Rudder, INPUT);
@@ -27,6 +29,7 @@ namespace Controller
         SetupRadio();
         ChangeState(Normal);
     }
+
     void Controller::SetupRadio()
     {
         SerialPrintLn("Started Radio set up");
@@ -51,10 +54,11 @@ namespace Controller
         radio.openWritingPipe(address[0]); // always uses pipe 0
 
         radio.setRetries(0, 15);
-        radio.stopListening();  // put radio in TX mode
+        radio.stopListening(); // put radio in TX mode
         SerialPrintLn("Done with Radio set up");
         ChangeState(Normal);
     }
+
     void Controller::ChangeState(FlagPins pin)
     {
         switch (pin)
@@ -71,10 +75,11 @@ namespace Controller
             break;
         }
     }
+
     void Controller::Read()
     {
-        this->payload[0] = AutonomosMode;
-        if (!AutonomosMode)
+        this->payload[0] = Manual;
+        if (!Manual)
         {
             this->payload[1] = 0;
             this->payload[2] = 0;
@@ -83,13 +88,13 @@ namespace Controller
         }
         else
         {
-            this->payload[1] = analogRead(Motor)/4;
+            this->payload[1] = analogRead(Motor) / 4;
             this->SerialPrintLn(payload[1]);
-            this->payload[2] = analogRead(Elevator)/4;
+            this->payload[2] = analogRead(Elevator) / 4;
             this->SerialPrintLn(payload[2]);
-            this->payload[3] = analogRead(Rudder)/4;
+            this->payload[3] = analogRead(Rudder) / 4;
             this->SerialPrintLn(payload[3]);
-            this->payload[4] = analogRead(Aileron)/4;
+            this->payload[4] = analogRead(Aileron) / 4;
             this->SerialPrintLn(payload[4]);
         }
     }
@@ -99,22 +104,22 @@ namespace Controller
         bool report = radio.write(&payload, sizeof(payload)); // transmit & save the report
         if (report)
         {
-           ChangeState(Normal);
+            ChangeState(Normal);
             SerialPrintLn("Was transmitted");
-           
         }
         else
-        { ChangeState(Error);
+        {
+            ChangeState(Error);
             SerialPrintLn("Message wasn't transmitted");
-           
         }
         controller.ClearRadio();
     }
+
     void Controller::SetupSerial()
     {
         if (this->PcSerial)
         {
-            Serial.begin(9600);
+            Serial.begin(SerialFrequency);
             while (!Serial)
             {
                 delay(100);
@@ -122,6 +127,7 @@ namespace Controller
             this->SerialPrintLn("The aircraft system is starting up");
         }
     }
+    // If serial is set to true,will print the text.
     void Controller::SerialPrintLn(String text)
     {
         if (this->PcSerial)
@@ -129,6 +135,7 @@ namespace Controller
             Serial.println(text);
         }
     }
+    // If serial is set to true,will print the text.
     void Controller::SerialPrintLn(float text)
     {
         if (this->PcSerial)

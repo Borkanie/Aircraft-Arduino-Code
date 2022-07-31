@@ -3,46 +3,46 @@
 
 namespace MissionControl
 {
-	Point::Point() : Matrix::Matrix(2, 1)
+	CoordinatePoint::CoordinatePoint() : Matrix::Matrix(2, 1)
 	{
 		matrix[0][0] = 0;
 		matrix[1][0] = 0;
 	}
-	Point::Point(float lat, float lon) : Matrix::Matrix(2, 1)
+	CoordinatePoint::CoordinatePoint(float lat, float lon) : Matrix::Matrix(2, 1)
 	{
 		matrix[0][0] = lat;
 		matrix[1][0] = lon;
 	}
-	float Point::GetLatitude()
+	float CoordinatePoint::GetLatitude()
 	{
 		return matrix[0][0];
 	}
-	float Point::GetLongitude()
+	float CoordinatePoint::GetLongitude()
 	{
 		return matrix[1][0];
 	}
-	void Point::SetLatitude(float lat)
+	void CoordinatePoint::SetLatitude(float lat)
 	{
 		matrix[0][0] = lat;
 	}
-	void Point::SetLongitude(float lon)
+	void CoordinatePoint::SetLongitude(float lon)
 	{
 		matrix[1][0] = lon;
 	}
 
 #pragma region SquareMission
-	SquareMission &SquareMission::operator=(const SquareMission &other)
+	RectangleMission &RectangleMission::operator=(const RectangleMission &other)
 	{
 		this->points[0] = other.points[0];
 		this->points[1] = other.points[1];
 		this->points[2] = other.points[2];
 		this->points[3] = other.points[3];
-		this->currentPosition = other.currentPosition;
+		this->missionPhase = other.missionPhase;
 		this->offset = other.offset;
 		return *this;
 	}
 
-	SquareMission::SquareMission()
+	RectangleMission::RectangleMission()
 	{
 		float baseLat = 0;
 		float baseLong = 0;
@@ -64,7 +64,7 @@ namespace MissionControl
 		points[3].SetLongitude(baseLong + offset);
 	}
 
-	SquareMission::SquareMission(float baseLat, float baseLong)
+	RectangleMission::RectangleMission(float baseLat, float baseLong)
 	{
 		// point 1 will be the current postion
 		points[0].SetLatitude(baseLat);
@@ -83,7 +83,7 @@ namespace MissionControl
 		points[3].SetLatitude(baseLat);
 		points[3].SetLongitude(baseLong + offset);
 	}
-	float *SquareMission::GetCurrentError(float currentLat, float currentLon)
+	float *RectangleMission::GetCurrentError(float currentLat, float currentLon)
 	{
 		float Lat = currentLat * DegreesToRadianstConst;
 		float Lon = currentLon * DegreesToRadianstConst;
@@ -99,7 +99,7 @@ namespace MissionControl
 		float pointz;
 
 		float *result = new float[2];
-		switch (currentPosition)
+		switch (missionPhase)
 		{
 		case 0:
 			if (currentLat < points[1].GetLatitude())
@@ -116,7 +116,7 @@ namespace MissionControl
 			else
 			{
 				// we got over the point
-				currentPosition = 1;
+				missionPhase = 1;
 				// we go east to point 2
 				pointLat = points[2].GetLatitude() * DegreesToRadianstConst;
 				pointLon = points[2].GetLongitude() * DegreesToRadianstConst;
@@ -142,7 +142,7 @@ namespace MissionControl
 			else
 			{
 				// we got over the point
-				currentPosition = 2;
+				missionPhase = 2;
 				// we go south to point 3
 				pointLat = points[3].GetLatitude() * DegreesToRadianstConst;
 				pointLon = points[3].GetLongitude() * DegreesToRadianstConst;
@@ -168,7 +168,7 @@ namespace MissionControl
 			else
 			{
 				// we got over the point
-				currentPosition = 3;
+				missionPhase = 3;
 				// we go west to point 0
 				pointLat = points[0].GetLatitude() * DegreesToRadianstConst;
 				pointLon = points[0].GetLongitude() * DegreesToRadianstConst;
@@ -194,7 +194,7 @@ namespace MissionControl
 			else
 			{
 				// we got over the point
-				currentPosition = 0;
+				missionPhase = 0;
 				// we go north to point 1
 				pointLat = points[1].GetLatitude() * DegreesToRadianstConst;
 				pointLon = points[1].GetLongitude() * DegreesToRadianstConst;
@@ -206,7 +206,7 @@ namespace MissionControl
 			}
 			return result;
 		default:
-			currentPosition = 0;
+			missionPhase = 0;
 			return result;
 		}
 	}

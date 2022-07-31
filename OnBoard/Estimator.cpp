@@ -120,14 +120,14 @@ namespace Estimator
 		}
 		return command;
 	}
-	PIDz &PIDz::operator=(const PIDz &other)
+	PIDz &PIDz::operator=(const PIDz &target)
 	{
-		currentError = other.currentError;
-		Kp = other.Kp;
-		Ki = other.Ki;
-		Kd = other.Kd;
-		Ts = other.Ts;
-		N = other.N;
+		currentError = target.currentError;
+		Kp = target.Kp;
+		Ki = target.Ki;
+		Kd = target.Kd;
+		Ts = target.Ts;
+		N = target.N;
 
 		return *this;
 	}
@@ -162,9 +162,9 @@ namespace Estimator
 	{
 		return evaluatedValue;
 	}
-	Integrator &Integrator::operator=(const Integrator &other)
+	Integrator &Integrator::operator=(const Integrator &target)
 	{
-		this->evaluatedValue = other.evaluatedValue;
+		this->evaluatedValue = target.evaluatedValue;
 		return *this;
 	}
 #pragma endregion
@@ -191,10 +191,10 @@ namespace Estimator
 	IntegrationSystem::~IntegrationSystem()
 	{
 	}
-	IntegrationSystem &IntegrationSystem::operator=(const IntegrationSystem &other)
+	IntegrationSystem &IntegrationSystem::operator=(const IntegrationSystem &target)
 	{
-		this->translationalVelocities = other.translationalVelocities;
-		this->rotationalVelocities = other.rotationalVelocities;
+		this->translationalVelocities = target.translationalVelocities;
+		this->rotationalVelocities = target.rotationalVelocities;
 		return *this;
 	}
 	void IntegrationSystem::ReadTranslationalVelocities(const float accel[3])
@@ -239,16 +239,16 @@ namespace Estimator
 		}
 	}
 
-	Matrix::Matrix(const Matrix &other)
+	Matrix::Matrix(const Matrix &target)
 	{
-		this->matrix = dynamicAlocation(other.rows, other.columns);
-		this->rows = other.rows;
-		this->columns = other.columns;
-		for (int i = 0; i < other.rows; i++)
+		this->matrix = dynamicAlocation(target.rows, target.columns);
+		this->rows = target.rows;
+		this->columns = target.columns;
+		for (int i = 0; i < target.rows; i++)
 		{
-			for (int j = 0; j < other.columns; j++)
+			for (int j = 0; j < target.columns; j++)
 			{
-				this->matrix[i][j] = other.matrix[i][j];
+				this->matrix[i][j] = target.matrix[i][j];
 			}
 		}
 	}
@@ -271,12 +271,12 @@ namespace Estimator
 		return result;
 	}
 
-	Matrix::Matrix(const Matrix &other, int startingRow, int endingRow, int startingColumn, int endingColumn)
+	Matrix::Matrix(const Matrix &target, int startingRow, int endingRow, int startingColumn, int endingColumn)
 	{
 		this->matrix = dynamicAlocation(endingRow - startingRow, endingColumn - startingColumn);
 		this->rows = endingRow - startingRow;
 		this->columns = endingColumn - startingColumn;
-		Attribute(other.matrix, startingRow, endingRow, startingColumn, endingColumn);
+		Attribute(target.matrix, startingRow, endingRow, startingColumn, endingColumn);
 	}
 
 	void Matrix::Attribute(float **sourceMatrix, int startingRow, int endingRow, int startingColumn, int endingColumn)
@@ -412,17 +412,17 @@ namespace Estimator
 		return result;
 	}
 
-	Matrix &Matrix::operator=(const Matrix &other)
+	Matrix &Matrix::operator=(const Matrix &target)
 	{
 		deallocateMemo(matrix, rows, columns);
-		this->rows = other.rows;
-		this->columns = other.columns;
+		this->rows = target.rows;
+		this->columns = target.columns;
 		matrix = dynamicAlocation(rows, columns);
-		for (int i = 0; i < other.rows; i++)
+		for (int i = 0; i < target.rows; i++)
 		{
-			for (int j = 0; j < other.columns; j++)
+			for (int j = 0; j < target.columns; j++)
 			{
-				this->matrix[i][j] = other.matrix[i][j];
+				this->matrix[i][j] = target.matrix[i][j];
 			}
 		}
 		return *this;
